@@ -21,8 +21,8 @@ const questionSchema = new mongoose.Schema(
 // класс по схеме:
 const Question = mongoose.model("Question", questionSchema);
 
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", () => console.log("database connected"));
+db.on("error", console.error.bind(console, "Connection error:"));
+db.once("open", () => console.log("Database connected"));
 
 // разобранный JSON в req.body
 app.use(bodyParser.json());

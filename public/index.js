@@ -45,13 +45,13 @@ const renderQuestion = ({ _id, title, answers }) => {
   <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
   </svg>`;
   btnDel.className = "btn btn-danger";
-  const postTitle = document.createElement("input");
-  postTitle.className = "card-title";
-  const postBody = document.createElement("textarea");
-  postBody.className = "card-text";
+  const questionTitle = document.createElement("input");
+  questionTitle.className = "card-title";
+  const questionAnswers = document.createElement("textarea");
+  questionAnswers.className = "card-text";
   div.className = "col-md-6 card card-body";
-  postTitle.value = title;
-  postBody.value = JSON.stringify(answers);
+  questionTitle.value = title;
+  questionAnswers.value = JSON.stringify(answers);
 
   btnShow.addEventListener("click", () => {
     const isEdit = divContainerEdit.classList.toggle("d-none");
@@ -66,13 +66,13 @@ const renderQuestion = ({ _id, title, answers }) => {
 
     divContainerText.innerHTML = `
       <div class="card-body">
-      <h5 class="card-title">${postTitle.value}</h5>
-      <p class="card-text">${postBody.value}</p>
+      <h5 class="card-title">${questionTitle.value}</h5>
+      <p class="card-text">${questionAnswers.value}</p>
       `
   });
 
-  divContainerEdit.append(postTitle);
-  divContainerEdit.append(postBody);
+  divContainerEdit.append(questionTitle);
+  divContainerEdit.append(questionAnswers);
   cardHeader.append(btnShow);
   cardHeader.append(btnDel);
   div.append(cardHeader);
@@ -86,8 +86,8 @@ const renderQuestion = ({ _id, title, answers }) => {
       method: "PUT",
       body: JSON.stringify({
         _id: _id,
-        title: postTitle.value,
-        answers: JSON.parse(postBody.value),
+        title: questionTitle.value,
+        answers: JSON.parse(questionAnswers.value),
       }),
       headers: {
         "Content-type": "application/json; charset=UTF-8",
@@ -119,13 +119,13 @@ document.getElementById("create_el").append(btnAdd);
 const openNewQuestionField = () => {
   const div = document.createElement("div");
   div.className = "d-flex flex-column";
-  const postTitle = document.createElement("input");
-  const postBody = document.createElement("textarea");
+  const questionTitle = document.createElement("input");
+  const questionAnswers = document.createElement("textarea");
   const btnSave = document.createElement("button");
   btnSave.innerText = "Save";
   btnSave.className = "btn btn-success";
-  div.append(postTitle);
-  div.append(postBody);
+  div.append(questionTitle);
+  div.append(questionAnswers);
   div.append(btnSave);
   document.getElementById("create_el").append(div);
   btnAdd.removeEventListener("click", openNewQuestionField);
@@ -134,8 +134,8 @@ const openNewQuestionField = () => {
     fetch("/questions", {
       method: "POST",
       body: JSON.stringify({
-        title: postTitle.value,
-        answers: JSON.parse(postBody.value),
+        title: questionTitle.value,
+        answers: JSON.parse(questionAnswers.value),
       }),
       headers: {
         "Content-type": "application/json; charset=UTF-8",

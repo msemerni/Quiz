@@ -4,14 +4,35 @@ const app = express();
 const bodyParser = require("body-parser");
 const bcrypt = require('bcryptjs');
 const reload = require('reload');
+require('dotenv').config();
 // express-session
 
-const port = process.env.PORT || 8000;
+const options = {
+  useNewUrlParser: true,
+  // reconnectTries: Number.MAX_VALUE,
+  // reconnectInterval: 500,
+  // connectTimeoutMS: 10000,
+};
 
-// база данных "quizdb" или "contquizdb"
-mongoose
-  // .connect("mongodb://mongo:27017/contquizdb",{ useNewUrlParser: true })
-  .connect("mongodb://127.0.0.1:27017/quizdb", { useNewUrlParser: true });
+const {
+  APP_NAME,
+  PORT,
+  DB_CONNECTION,
+  DB_HOST,
+  DB_PORT,
+  DB_DATABASE,
+} = process.env;
+
+const dbOptions = {
+  useNewUrlParser: true,
+};
+
+const port = PORT || 3000;
+const dbConnectionUrl = `${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
+
+mongoose.connect(dbConnectionUrl, dbOptions);
+// mongoose.connect("mongodb://mongo:27017/contquizdb",{ useNewUrlParser: true });
+
 const db = mongoose.connection;
 
 const questionSchema = new mongoose.Schema(
@@ -137,11 +158,13 @@ app.put("/question/:id", async (req, res) => {
   catch (error) {
     res.status(500).json({ "error": error });
   }
-})
-
-// Перезагрузка фронта:
-reload(app).then(reloadReturned => {
-  app.listen(port, () => console.log(`Quiz app listening on port ${port}`));
-}).catch(err => {
-  console.error("Reload could not start", err)
 });
+
+// Перезагрузка фронта: /// ОШИБКА СОКЕТА В КОНСОЛИ // УДАЛИТЬ ЗАВИСИМОСТИ !!!!!
+// reload(app).then(reloadReturned => {
+//   app.listen(port, () => console.log(`${APP_NAME} app listening on port ${port}`));
+// }).catch(err => {
+//   console.error("Reload could not start", err)
+// });
+
+app.listen(port, () => console.log(`${APP_NAME} app listening on port ${port}`));

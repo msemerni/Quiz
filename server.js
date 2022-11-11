@@ -1,8 +1,12 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const app = express();
-const port = process.env.PORT || 8000;
 const bodyParser = require("body-parser");
+const bcrypt = require('bcryptjs');
+const reload = require('reload');
+// express-session
+
+const port = process.env.PORT || 8000;
 
 // база данных "quizdb" или "contquizdb"
 mongoose
@@ -18,8 +22,18 @@ const questionSchema = new mongoose.Schema(
   { versionKey: false }
 );
 
+const userSchema = new mongoose.Schema(
+  {
+    login: String,
+    password: String,
+    nick: String,
+  },
+  { versionKey: false }
+);
+
 // класс по схеме:
 const Question = mongoose.model("Question", questionSchema);
+const User = mongoose.model("User", userSchema);
 
 db.on("error", console.error.bind(console, "Connection error:"));
 db.once("open", () => console.log("Database connected"));
@@ -29,50 +43,75 @@ app.use(bodyParser.json());
 
 app.use(express.static("public"));
 
+////////////////////////////////////
+// создание нового юзера:
+app.post("/user/signup", async (req, res) => {
+  try {
+    const { login, password, nick } = req.body;
+    const isUserExist = await User.findOne({ login });
+
+    if (!isUserExist) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      const newUser = new User({ login, password: passwordHash, nick });
+      // // const isCorrectPassword = await bcrypt.compare(password, passwordHash);
+      await newUser.save();
+      res.status(201).send({ login, nick });
+    }
+    else {
+      res.status(409).json("User already exist");
+    }
+  }
+  catch (error) {
+    res.status(500).json({ "error": error });
+  }
+});
+
+////////////////////////////////////
+
 // отдает все вопросы
-app.get("/questions", async (req, res) => {
+app.get("/question", async (req, res) => {
   try {
     res.send(await Question.find());
   }
   catch (error) {
-    return res.status(500).json({ "error": error });
+    res.status(500).json({ "error": error });
   }
 });
 
 // отдает вопрос по id :
-app.get("/questions/:id", async (req, res) => {
+app.get("/question/:id", async (req, res) => {
   try {
     res.send(await Question.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }));
   }
   catch (error) {
-    return res.status(500).json({ "error": error });
+    res.status(500).json({ "error": error });
   }
 });
 
 // создание нового вопроса:
-app.post("/questions", async (req, res) => {
+app.post("/question", async (req, res) => {
   try {
     const newQuestion = new Question(req.body);
     await newQuestion.save();
     res.status(201).send(newQuestion);
   }
   catch (error) {
-    return res.status(500).json({ "error": error });
+    res.status(500).json({ "error": error });
   }
 });
 
 // удаление вопроса:
-app.delete("/questions/:id", async (req, res) => {
+app.delete("/question/:id", async (req, res) => {
   try {
     res.send(await Question.findByIdAndDelete({ _id: mongoose.Types.ObjectId(req.params.id) }));
   }
   catch (error) {
-    return res.status(500).json({ "error": error });
+    res.status(500).json({ "error": error });
   }
 });
 
 // изменение вопроса:
-app.put("/questions/:id", async (req, res) => {
+app.put("/question/:id", async (req, res) => {
   try {
     const _id = req.params.id;
     const { title, answers } = req.body;
@@ -96,8 +135,13 @@ app.put("/questions/:id", async (req, res) => {
     }
   }
   catch (error) {
-    return res.status(500).json({ "error": error });
+    res.status(500).json({ "error": error });
   }
 })
 
-app.listen(port, () => console.log(`Quiz app listening on port ${port}`));
+// Перезагрузка фронта:
+reload(app).then(reloadReturned => {
+  app.listen(port, () => console.log(`Quiz app listening on port ${port}`));
+}).catch(err => {
+  console.error("Reload could not start", err)
+});

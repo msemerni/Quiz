@@ -213,11 +213,11 @@ const openNewQuestionField = () => {
   const questionTitle = document.createElement("input");
   questionTitle.placeholder = "add question";
   const questionAnswers = document.createElement("textarea");
-  questionAnswers.placeholder = "add aswers [{}]";
+  questionAnswers.placeholder = "add answers [{}]";
   questionAnswers.classList = "my-2"
   const btnSave = document.createElement("button");
   btnSave.innerText = "Save";
-  btnSave.className = "btn btn-outline-success btn-sm";
+  btnSave.className = "btn btn-outline-success btn-sm mb-2";
   div.append(questionTitle);
   div.append(questionAnswers);
   div.append(btnSave);

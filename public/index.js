@@ -2,10 +2,7 @@ const renderQuestions = async () => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
   const response = await fetch(`/question`);
-  // console.log(response);
-
   let data = await response.json();
-  console.log(data);
 
   if (response.ok === true) {
     data.map(item => renderQuestion(item));
@@ -81,9 +78,7 @@ const renderQuestion = ({ _id, title, answers }) => {
   divContainerEdit.append(questionAnswers);
   cardHeader.append(btnShow);
   cardHeader.append(btnDel);
-  div.append(cardHeader);
-  div.append(divContainerEdit);
-  div.append(divContainerText);
+  div.append(cardHeader, divContainerEdit, divContainerText);
 
   document.getElementById("container").append(div);
 
@@ -117,24 +112,25 @@ const renderQuestion = ({ _id, title, answers }) => {
   })
 };
 
-////////////// loginForm
+//signup
 const registerNewUser = async () => {
-    fetch("/user/signup", {
-      method: "POST",
-      body: JSON.stringify({
-        login: loginInput.value,
-        password: passwordInput.value,
-        confirmPassword: passwordConfirmInput.value,
-        nick: nickInput.value,
-      }),
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => { console.log(json) });
+  fetch("/user/signup", {
+    method: "POST",
+    body: JSON.stringify({
+      login: loginInput.value,
+      password: passwordInput.value,
+      confirmPassword: passwordConfirmInput.value,
+      nick: nickInput.value,
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => { console.log(json) });
 };
 
+//login
 const loginUser = async () => {
   fetch("/user/login", {
     method: "POST",
@@ -147,36 +143,34 @@ const loginUser = async () => {
     },
   })
     .then((response) => response.json())
-    .then((json) => {console.log(json)});
+    .then((json) => { console.log(json) });
 };
 
+//logout
 const logoutUser = async () => {
   fetch(`/user/logout`)
     .then((response) => response.json())
-    .then((json) => {console.log(json)});
+    .then((json) => { console.log(json) });
 };
-
-
 
 const loginForm = document.createElement("form");
 loginForm.classList = 'm-auto px-2 w-100 h-100 text-center bg-light';
 
 const loginDiv = document.createElement("div");
-loginDiv.className="m-1";
+loginDiv.className = "m-1";
 const loginLabel = document.createElement("label");
 loginLabel.classList = "form-label";
 loginLabel.innerText = "Email:";
 const loginInput = document.createElement("input");
-// loginInput.type = "email";
+loginInput.type = "email";
 loginInput.placeholder = "* valid email";
 // loginInput.setAttribute('required', 'required'); 
 loginInput.classList = "form-control";
-
 loginLabel.append(loginInput);
 loginDiv.append(loginLabel);
 
 const passwordDiv = document.createElement("div");
-passwordDiv.className="m-1";
+passwordDiv.className = "m-1";
 const passwordLabel = document.createElement("label");
 passwordLabel.classList = "form-label";
 passwordLabel.innerText = "Password:";
@@ -187,7 +181,7 @@ passwordInput.placeholder = "* 'a-zA-Z0-9_' 3-20 symbols";
 passwordInput.classList = "form-control";
 
 const passwordConfirmDiv = document.createElement("div");
-passwordConfirmDiv.className="m-1";
+passwordConfirmDiv.className = "m-1";
 const passwordConfirmLabel = document.createElement("label");
 passwordConfirmLabel.classList = "form-label";
 passwordConfirmLabel.innerText = "Confirm password:";
@@ -204,7 +198,7 @@ passwordDiv.append(passwordLabel);
 passwordConfirmDiv.append(passwordConfirmLabel);
 
 const nickDiv = document.createElement("div");
-nickDiv.className="m-1";
+nickDiv.className = "m-1";
 const nickLabel = document.createElement("label");
 nickLabel.classList = "form-label";
 nickLabel.innerText = "Nick name:";
@@ -215,7 +209,6 @@ nickInput.classList = "form-control";
 
 nickLabel.append(nickInput);
 nickDiv.append(nickLabel);
-
 
 const btnDiv = document.createElement("div");
 
@@ -237,23 +230,19 @@ loginForm.append(loginDiv, passwordDiv, passwordConfirmDiv, nickDiv, btnDiv);
 
 document.querySelector(".login-form").append(loginForm);
 
-loginBtn.addEventListener("click", function (e){
+loginBtn.addEventListener("click", function (e) {
   e.preventDefault();
   loginUser();
 });
 
-logoutBtn.addEventListener("click", function (e){
-  // e.preventDefault(); //// удалить
+logoutBtn.addEventListener("click", function (e) {
   logoutUser();
 });
 
-signupBtn.addEventListener("click", function (e){
+signupBtn.addEventListener("click", function (e) {
   e.preventDefault();
   registerNewUser();
 });
-
-
-/////////////
 
 const btnAdd = document.createElement("button");
 btnAdd.innerText = "Create Question";
@@ -274,9 +263,7 @@ const openNewQuestionField = () => {
   const btnSave = document.createElement("button");
   btnSave.innerText = "Save";
   btnSave.className = "btn btn-outline-success btn-sm mb-2";
-  div.append(questionTitle);
-  div.append(questionAnswers);
-  div.append(btnSave);
+  div.append(questionTitle, questionAnswers, btnSave);
   document.getElementById("create_el").append(div);
   btnAdd.removeEventListener("click", openNewQuestionField);
 
@@ -299,12 +286,8 @@ const openNewQuestionField = () => {
         renderQuestions();
       });
   };
-
   btnSave.addEventListener("click", addNewQuestion);
-
 }
 
 btnAdd.addEventListener("click", openNewQuestionField);
 btnShowQuestions.addEventListener("click", renderQuestions);
-
-// renderQuestions();

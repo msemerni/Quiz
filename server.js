@@ -9,6 +9,7 @@ const session = require("express-session");
 let RedisStore = require("connect-redis")(session);
 const { createClient } = require("redis");
 const protectAccess = require("./middleware/auth.js");
+const Joi = require('joi');
 
 const {
   APP_NAME,
@@ -17,23 +18,51 @@ const {
   DB_HOST,
   DB_PORT,
   DB_DATABASE,
-  REDIS_URL,
+  REDIS_NAME,
+  REDIS_HOST,
   REDIS_PORT,
   SESSION_SECRET,
+  PASSWORD_PATTERN
 } = process.env;
+
+
+//// JOI
+const joiSchema = Joi.object({
+
+  login: Joi
+    .string()
+    .required()
+    .email(),
+
+  password: Joi
+    .string()
+    .required()
+    .pattern(new RegExp(PASSWORD_PATTERN)),
+
+  confirmPassword: Joi
+    .any()
+    .required()
+    .equal(Joi.ref('password')),
+
+  nick: Joi
+    .string()
+    .empty('')
+    .max(50)
+    .default('anon')
+})
 
 const dbOptions = {
   useNewUrlParser: true,
-  // reconnectTries: Number.MAX_VALUE,
-  // reconnectInterval: 500,
-  // connectTimeoutMS: 10000,
 };
 
 const port = PORT || 3000;
 const dbConnectionUrl = `${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
+// const dbConnectionUrl = "mongodb://mongo:27017/contquizdb";
 
-// mongoose.connect(dbConnectionUrl, dbOptions);
-mongoose.connect("mongodb://mongo:27017/contquizdb",{ useNewUrlParser: true });
+
+mongoose.connect(dbConnectionUrl, dbOptions);
+
+
 
 const db = mongoose.connection;
 
@@ -59,16 +88,16 @@ const Question = mongoose.model("Question", questionSchema);
 const User = mongoose.model("User", userSchema);
 
 db.on("error", console.error.bind(console, "Connection error:"));
-db.once("open", () => console.log("Database connected"));
+db.once("open", () => console.log("Mongo connected"));
 
 //сессия
 let redisClient = createClient({ 
   legacyMode: true,
-  url: 'redis://redis:6379'  //// УРЛ ДЛЯ КОНТЕЙНЕРА
+  url: `${REDIS_NAME}://${REDIS_HOST}:${REDIS_PORT}`  //// УРЛ ДЛЯ КОНТЕЙНЕРА REDIS
 });
 
 redisClient.connect().then(console.log("Redis connected"));
- 
+
 app.use(
   session({
     store: new RedisStore({ client: redisClient }), // сохранять сессии в редис. по дефолту в памяти
@@ -102,18 +131,26 @@ app.use(express.static("public"));
 // создание нового юзера:
 app.post("/user/signup", async (req, res) => {
   try {
-    const { login, password, nick } = req.body;
-    const isUserExist = await User.findOne({ login });
+    const { login, password, confirmPassword, nick } = req.body;
 
-    if (!isUserExist) {
-      const passwordHash = await bcrypt.hash(password, 10);
-      const newUser = new User({ login, password: passwordHash, nick });
-      await newUser.save();
-      req.session.user = newUser;
-      res.status(201).send({ login, nick });
+    const isNotValidNewUser =  joiSchema.validate({ login, password, confirmPassword, nick }).error;
+
+    if (!isNotValidNewUser) {
+      const isUserExist = await User.findOne({ login });
+
+      if (!isUserExist) {
+        const passwordHash = await bcrypt.hash(password, 10);
+        const newUser = new User({ login, password: passwordHash, nick: nick || "anon" });
+        await newUser.save();
+        req.session.user = newUser;
+        res.status(201).send({ login: newUser.login, nick: newUser.nick });
+      }
+      else {
+        res.status(401).send({ status: "error", message: "user already exist" });
+      }
     }
     else {
-      res.status(409).send({status: "exception", message: "user already exist"});
+      res.status(401).send(isNotValidNewUser.details[0]);
     }
   }
   catch (error) {
@@ -136,10 +173,10 @@ app.post("/user/login", async (req, res) => {
         return res.status(200).send({_id: user._id, login: user.login, nick: user.nick || "Anon" });
       }
 
-      res.status(401).send({ status: "exception", message: "wrong password" });
+      res.status(401).send({ status: "error", message: "wrong password" });
     }
     else {
-      res.status(401).send({ status: "exception", message: "user not found" });
+      res.status(401).send({ status: "error", message: "user not found" });
     }
   }
   catch (error) {

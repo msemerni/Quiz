@@ -119,19 +119,20 @@ const renderQuestion = ({ _id, title, answers }) => {
 
 ////////////// loginForm
 const registerNewUser = async () => {
-  fetch("/user/signup", {
-    method: "POST",
-    body: JSON.stringify({
-      login: loginInput.value,
-      password: passwordInput.value,
-      nick: nickInput.value,
-    }),
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  })
-    .then((response) => response.json())
-    .then((json) => {console.log(json)});
+    fetch("/user/signup", {
+      method: "POST",
+      body: JSON.stringify({
+        login: loginInput.value,
+        password: passwordInput.value,
+        confirmPassword: passwordConfirmInput.value,
+        nick: nickInput.value,
+      }),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    })
+      .then((response) => response.json())
+      .then((json) => { console.log(json) });
 };
 
 const loginUser = async () => {
@@ -140,7 +141,6 @@ const loginUser = async () => {
     body: JSON.stringify({
       login: loginInput.value,
       password: passwordInput.value,
-      nick: nickInput.value,
     }),
     headers: {
       "Content-type": "application/json; charset=UTF-8",
@@ -168,7 +168,8 @@ loginLabel.classList = "form-label";
 loginLabel.innerText = "Email:";
 const loginInput = document.createElement("input");
 // loginInput.type = "email";
-loginInput.setAttribute('required', 'required'); 
+loginInput.placeholder = "* valid email";
+// loginInput.setAttribute('required', 'required'); 
 loginInput.classList = "form-control";
 
 loginLabel.append(loginInput);
@@ -181,11 +182,26 @@ passwordLabel.classList = "form-label";
 passwordLabel.innerText = "Password:";
 const passwordInput = document.createElement("input");
 passwordInput.type = "password";
-passwordInput.setAttribute('required', 'required'); 
+passwordInput.placeholder = "* 'a-zA-Z0-9_' 3-20 symbols";
+// passwordInput.setAttribute('required', 'required'); 
 passwordInput.classList = "form-control";
 
+const passwordConfirmDiv = document.createElement("div");
+passwordConfirmDiv.className="m-1";
+const passwordConfirmLabel = document.createElement("label");
+passwordConfirmLabel.classList = "form-label";
+passwordConfirmLabel.innerText = "Confirm password:";
+const passwordConfirmInput = document.createElement("input");
+passwordConfirmInput.type = "password";
+passwordConfirmInput.placeholder = "* 'a-zA-Z0-9_' 3-20 symbols";
+// passwordConfirmInput.setAttribute('required', 'required'); 
+passwordConfirmInput.classList = "form-control";
+
 passwordLabel.append(passwordInput);
+passwordConfirmLabel.append(passwordConfirmInput);
+
 passwordDiv.append(passwordLabel);
+passwordConfirmDiv.append(passwordConfirmLabel);
 
 const nickDiv = document.createElement("div");
 nickDiv.className="m-1";
@@ -194,6 +210,7 @@ nickLabel.classList = "form-label";
 nickLabel.innerText = "Nick name:";
 const nickInput = document.createElement("input");
 nickInput.type = "text";
+nickInput.placeholder = "not required";
 nickInput.classList = "form-control";
 
 nickLabel.append(nickInput);
@@ -216,7 +233,7 @@ signupBtn.innerText = "SignUp";
 
 btnDiv.append(loginBtn, logoutBtn, signupBtn);
 
-loginForm.append(loginDiv, passwordDiv, nickDiv, btnDiv);
+loginForm.append(loginDiv, passwordDiv, passwordConfirmDiv, nickDiv, btnDiv);
 
 document.querySelector(".login-form").append(loginForm);
 

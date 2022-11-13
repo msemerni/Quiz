@@ -6,3 +6,4 @@ Dockerfile
 docker-compose*
 tempfolder
 questions.txt
+nodemon.json

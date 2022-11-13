@@ -32,8 +32,8 @@ const dbOptions = {
 const port = PORT || 3000;
 const dbConnectionUrl = `${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
 
-mongoose.connect(dbConnectionUrl, dbOptions);
-// mongoose.connect("mongodb://mongo:27017/contquizdb",{ useNewUrlParser: true });
+// mongoose.connect(dbConnectionUrl, dbOptions);
+mongoose.connect("mongodb://mongo:27017/contquizdb",{ useNewUrlParser: true });
 
 const db = mongoose.connection;
 
@@ -64,8 +64,7 @@ db.once("open", () => console.log("Database connected"));
 //сессия
 let redisClient = createClient({ 
   legacyMode: true,
-  // host: REDIS_URL,
-  // port: REDIS_PORT,
+  url: 'redis://redis:6379'  //// УРЛ ДЛЯ КОНТЕЙНЕРА
 });
 
 redisClient.connect().then(console.log("Redis connected"));

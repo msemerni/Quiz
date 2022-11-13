@@ -1,9 +1,15 @@
 const renderQuestions = async () => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
-  fetch(`/question`)
-    .then(response => response.json())
-    .then(data => data.map(item => renderQuestion(item)));
+  const response = await fetch(`/question`);
+  // console.log(response);
+
+  let data = await response.json();
+  console.log(data);
+
+  if (response.ok === true) {
+    data.map(item => renderQuestion(item));
+  }
 }
 
 const renderQuestion = ({ _id, title, answers }) => {
@@ -128,6 +134,29 @@ const registerNewUser = async () => {
     .then((json) => {console.log(json)});
 };
 
+const loginUser = async () => {
+  fetch("/user/login", {
+    method: "POST",
+    body: JSON.stringify({
+      login: loginInput.value,
+      password: passwordInput.value,
+      nick: nickInput.value,
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => {console.log(json)});
+};
+
+const logoutUser = async () => {
+  fetch(`/user/logout`)
+    .then((response) => response.json())
+    .then((json) => {console.log(json)});
+};
+
+
 
 const loginForm = document.createElement("form");
 loginForm.classList = 'm-auto px-2 w-100 h-100 text-center bg-light';
@@ -190,6 +219,16 @@ btnDiv.append(loginBtn, logoutBtn, signupBtn);
 loginForm.append(loginDiv, passwordDiv, nickDiv, btnDiv);
 
 document.querySelector(".login-form").append(loginForm);
+
+loginBtn.addEventListener("click", function (e){
+  e.preventDefault();
+  loginUser();
+});
+
+logoutBtn.addEventListener("click", function (e){
+  // e.preventDefault(); //// удалить
+  logoutUser();
+});
 
 signupBtn.addEventListener("click", function (e){
   e.preventDefault();

@@ -1,23 +1,35 @@
 version: '3'
 services:
+
   node:
-    restart: always
+    # restart: always
     build: .
     ports:
       - 5000:8000
     volumes:
       - ./:/code
-    # env_file: .env
-    # environment:
+    env_file: .env
+    environment:
     #   - DB_CONNECTION=$DB_CONNECTION
     #   - DB_PORT=$DB_PORT
     #   - DB_HOST=$DB_HOST
     #   - DB_DATABASE=$DB_DATABASE
+        - SESSION_SECRET=$SESSION_SECRET
+    depends_on:
+      - mongo
+
   mongo:
     image: mongo
     ports:
       - 27018:27017
     volumes:
       - mongodb:/data/db
+    # environment: 
+    #   - MONGO_INITDB_ROOT_USERNAME=mv
+    #   - MONGO_INITDB_ROOT_PASSWORD=MyNewPass5!
+
+  redis:
+    image: redis
+
 volumes:
  mongodb:

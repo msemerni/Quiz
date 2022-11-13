@@ -5,14 +5,10 @@ const bodyParser = require("body-parser");
 const bcrypt = require('bcryptjs');
 const reload = require('reload');
 require('dotenv').config();
-// express-session
-
-const options = {
-  useNewUrlParser: true,
-  // reconnectTries: Number.MAX_VALUE,
-  // reconnectInterval: 500,
-  // connectTimeoutMS: 10000,
-};
+const session = require("express-session");
+let RedisStore = require("connect-redis")(session);
+const { createClient } = require("redis");
+const protectAccess = require("./middleware/auth.js");
 
 const {
   APP_NAME,
@@ -21,10 +17,16 @@ const {
   DB_HOST,
   DB_PORT,
   DB_DATABASE,
+  REDIS_URL,
+  REDIS_PORT,
+  SESSION_SECRET,
 } = process.env;
 
 const dbOptions = {
   useNewUrlParser: true,
+  // reconnectTries: Number.MAX_VALUE,
+  // reconnectInterval: 500,
+  // connectTimeoutMS: 10000,
 };
 
 const port = PORT || 3000;
@@ -59,9 +61,42 @@ const User = mongoose.model("User", userSchema);
 db.on("error", console.error.bind(console, "Connection error:"));
 db.once("open", () => console.log("Database connected"));
 
+//сессия
+let redisClient = createClient({ 
+  legacyMode: true,
+  // host: REDIS_URL,
+  // port: REDIS_PORT,
+});
+
+redisClient.connect().then(console.log("Redis connected"));
+ 
+app.use(
+  session({
+    store: new RedisStore({ client: redisClient }), // сохранять сессии в редис. по дефолту в памяти
+    resave: false, // true-перезаписывать сессии если даже небыло изменений
+    rolling: true, // обновляет maxAge
+    saveUninitialized: false, // false-не будет помещать в redis пустые сессии (типа без такого: req.session.user = user;).
+    secret: SESSION_SECRET, //подписание идентификатора сеанса
+    cookie: {
+      // secure: false, // false-сеансы будут создаваться и на http (true-только для https) ДЕФОЛТ
+      maxAge: 1000 * 60 * 60 * 24 //1day
+    }
+  }));
+ 
+// console.log("SESSION:",session);
+app.use(function (req, res, next) {
+  if (!req.session) {
+    return next(new Error("oh no"));
+  }
+  next();
+})
+
+redisClient.on("error", console.error.bind(console, "Error connection to Redis:"));
+
+
 // разобранный JSON в req.body
 app.use(bodyParser.json());
-
+// фронт
 app.use(express.static("public"));
 
 ////////////////////////////////////
@@ -74,12 +109,12 @@ app.post("/user/signup", async (req, res) => {
     if (!isUserExist) {
       const passwordHash = await bcrypt.hash(password, 10);
       const newUser = new User({ login, password: passwordHash, nick });
-      // // const isCorrectPassword = await bcrypt.compare(password, passwordHash);
       await newUser.save();
+      req.session.user = newUser;
       res.status(201).send({ login, nick });
     }
     else {
-      res.status(409).json("User already exist");
+      res.status(409).send({status: "exception", message: "user already exist"});
     }
   }
   catch (error) {
@@ -87,10 +122,45 @@ app.post("/user/signup", async (req, res) => {
   }
 });
 
-////////////////////////////////////
+// логин
+app.post("/user/login", async (req, res) => {
+  try {
+    const { login, password } = req.body;
+    const user = await User.findOne({ login });
 
-// отдает все вопросы
-app.get("/question", async (req, res) => {
+    if (user) {
+      const isCorrectPassword = await bcrypt.compare(password, user.password);
+      console.log(isCorrectPassword);
+
+      if (isCorrectPassword) {
+        req.session.user = user;
+        return res.status(200).send({_id: user._id, login: user.login, nick: user.nick || "Anon" });
+      }
+
+      res.status(401).send({ status: "exception", message: "wrong password" });
+    }
+    else {
+      res.status(401).send({ status: "exception", message: "user not found" });
+    }
+  }
+  catch (error) {
+    res.status(500).json({ "error": error });
+  }
+});
+
+// логаут
+app.get("/user/logout", async (req, res) => {
+  try {
+    req.session.destroy();
+    res.status(200).json({ status: "success", message: "logout success" });
+  } 
+  catch (error) {
+    res.status(500).json({ "error": error });
+  }
+});
+
+////////////////////////////////////
+app.get("/question", protectAccess, async (req, res) => {
   try {
     res.send(await Question.find());
   }
@@ -100,7 +170,7 @@ app.get("/question", async (req, res) => {
 });
 
 // отдает вопрос по id :
-app.get("/question/:id", async (req, res) => {
+app.get("/question/:id", protectAccess, async (req, res) => {
   try {
     res.send(await Question.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }));
   }
@@ -110,7 +180,7 @@ app.get("/question/:id", async (req, res) => {
 });
 
 // создание нового вопроса:
-app.post("/question", async (req, res) => {
+app.post("/question", protectAccess, async (req, res) => {
   try {
     const newQuestion = new Question(req.body);
     await newQuestion.save();
@@ -122,7 +192,7 @@ app.post("/question", async (req, res) => {
 });
 
 // удаление вопроса:
-app.delete("/question/:id", async (req, res) => {
+app.delete("/question/:id", protectAccess, async (req, res) => {
   try {
     res.send(await Question.findByIdAndDelete({ _id: mongoose.Types.ObjectId(req.params.id) }));
   }
@@ -132,7 +202,7 @@ app.delete("/question/:id", async (req, res) => {
 });
 
 // изменение вопроса:
-app.put("/question/:id", async (req, res) => {
+app.put("/question/:id", protectAccess, async (req, res) => {
   try {
     const _id = req.params.id;
     const { title, answers } = req.body;

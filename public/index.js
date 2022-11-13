@@ -3,6 +3,7 @@ const renderQuestions = async () => {
   container.innerHTML = "";
   const response = await fetch(`/question`);
   let data = await response.json();
+  console.log(data);
 
   if (response.ok === true) {
     data.map(item => renderQuestion(item));

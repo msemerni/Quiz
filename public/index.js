@@ -249,7 +249,7 @@ const btnAdd = document.createElement("button");
 btnAdd.innerText = "Create Question";
 btnAdd.className = "btn btn-outline-success m-2 w-25 align-self-center";
 const btnShowQuestions = document.createElement("button");
-btnShowQuestions.innerText = "Show Question";
+btnShowQuestions.innerText = "Show Questions";
 btnShowQuestions.className = "btn btn-outline-success m-2 w-25 align-self-center";
 document.getElementById("create_el").append(btnShowQuestions, btnAdd);
 

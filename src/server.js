@@ -2,14 +2,13 @@
 exports.__esModule = true;
 // const initDB =require("./tempfolder/baza");
 var mongoose = require("mongoose");
-// import express, { Express, Request, Response } from 'express';
-var express = require('express');
+var express_1 = require("express");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 var RedisStore = require("connect-redis")(session);
 var createClient = require("redis").createClient;
 var _a = require("./constants/constants.js"), APP_NAME = _a.APP_NAME, PORT = _a.PORT, DB_CONNECTION = _a.DB_CONNECTION, DB_HOST = _a.DB_HOST, DB_PORT = _a.DB_PORT, DB_DATABASE = _a.DB_DATABASE, REDIS_NAME = _a.REDIS_NAME, REDIS_HOST = _a.REDIS_HOST, REDIS_PORT = _a.REDIS_PORT, SESSION_SECRET = _a.SESSION_SECRET;
-var app = express();
+var app = (0, express_1["default"])();
 var dbOptions = {
     useNewUrlParser: true
 };
@@ -42,7 +41,7 @@ app.use(function (req, res, next) {
 });
 redisClient.on("error", console.error.bind(console, "Error connection to Redis:"));
 app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(express_1["default"].static("public"));
 /////////////////////
 // Question.insertMany(initDB);
 /////////////////////

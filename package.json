@@ -4,7 +4,7 @@
   "description": "quiz project",
   "main": "server.ts",
   "scripts": {
-    "build": "npx tsc ./src/server.ts" ,
+    "build": "npx tsc ./src/server.ts --esModuleInterop" ,
     "start": "node dist/server.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/server.js\""
   },

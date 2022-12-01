@@ -15,6 +15,7 @@
     ],
   },
   "include": ["./src/**/*"],
-  "exclude": ["src/types/*.ts", "node_modules", ".vscode"],
+  // "exclude": ["src/types/*.ts", "node_modules", ".vscode"],
+  "exclude": ["node_modules", ".vscode"],
   "files":["./src/types/global.d.ts"]
 }

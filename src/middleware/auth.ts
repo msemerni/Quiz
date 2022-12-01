@@ -1,4 +1,6 @@
-const protectAccess = async (req, res, next) => {
+import { NextFunction, Request, Response } from 'express';
+
+const protectAccess = async (req: Request, res: Response, next: NextFunction) => {
   const { user } = req.session;
 
   if (!user) {

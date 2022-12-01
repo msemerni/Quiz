@@ -1,20 +1,12 @@
 
 import "express-session";
 
+
 declare module 'express-session' {
   export interface Session {
     user: { [key: string]: string };
   }
 }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -36,3 +28,8 @@ declare module 'express-session' {
 //   }
 // }
 
+// declare module "express-session" {
+//   export interface SessionData {
+//     user: string;
+//   }
+// }

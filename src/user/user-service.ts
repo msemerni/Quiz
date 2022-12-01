@@ -1,15 +1,20 @@
 import { Hash } from 'crypto';
+import Joi from 'joi';
 const bcrypt = require('bcryptjs');
 const joiSchema = require("./validators/joi-validator.js");
 const User = require("./user/user-model");
 
-// type UserType = {
-//     [key: string]: string
-//   }
+type UserType = {
+    login: String,
+    password: String,
+    nick: String,
+    save(): UserType
+    // [key: string]: string
+  }
 
 const SignUp = async (req, res) => {
   try {
-    const { login, password, nick } = req.body;
+    const { login, password, nick }: { login: String, password: String, nick: String } = req.body;
     const isNotValidNewUser = joiSchema.validate({ login, password, nick }).error;
 
     if (!isNotValidNewUser) {

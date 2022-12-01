@@ -1,8 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 exports.__esModule = true;
 // const initDB =require("./tempfolder/baza");
 var mongoose = require("mongoose");
-var express_1 = require("express");
+var express_1 = __importDefault(require("express"));
 var bodyParser = require("body-parser");
 var session = require("express-session");
 var RedisStore = require("connect-redis")(session);

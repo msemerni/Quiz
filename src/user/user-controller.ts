@@ -9,6 +9,8 @@ app.post("/user/signup", async (req: Request, res: Response) => {
 
 // login
 app.post("/user/login", async (req: Request, res: Response) => {
+  console.log("R_E_Q:", req);
+  
   LogIn(req, res);
 });
 

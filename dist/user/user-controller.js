@@ -17,6 +17,7 @@ app.post("/user/signup", (req, res) => __awaiter(void 0, void 0, void 0, functio
 }));
 // login
 app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("R_E_Q:", req);
     LogIn(req, res);
 }));
 // logout

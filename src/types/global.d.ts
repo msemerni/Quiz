@@ -1,6 +1,6 @@
 
 import "express-session";
-
+import { Request } from "express"
 
 declare module 'express-session' {
   export interface Session {
@@ -8,7 +8,15 @@ declare module 'express-session' {
   }
 }
 
+export interface IGetUserAuthInfoRequest extends Request {
+  user: { [key: string]: string };
+}
 
+// declare module 'express-session' {
+//   export interface Request {
+//     user: { [key: string]: string };
+//   }
+// }
 
 // declare namespace Express {
 //   export interface Request {
@@ -18,6 +26,7 @@ declare module 'express-session' {
 //     user: { [key: string]: string };
 //   }
 // }
+
 
 // declare namespace Session {
 //   export interface Request {

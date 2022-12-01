@@ -1,6 +1,7 @@
 // const initDB =require("./tempfolder/baza");
 const mongoose = require("mongoose");
-import express, { Express, Request, Response } from 'express';
+// import express, { Express, Request, Response } from 'express';
+const express = require("express");
 const bodyParser = require("body-parser");
 const session = require("express-session");
 const RedisStore = require("connect-redis")(session);
@@ -19,7 +20,7 @@ const {
 } = require("./constants/constants.js");
 
 
-const app: Express = express();
+const app = express();
 const dbOptions = {
   useNewUrlParser: true,
 };
@@ -55,7 +56,7 @@ app.use(
     }
   }));
 
-app.use((req: Request, res: Response, next) => {
+app.use((req, res, next) => {
   if (!req.session) {
     return next(new Error("oh no"));
   }
@@ -73,6 +74,6 @@ app.use(express.static("public"));
 /////////////////////
 
 // app.listen(port, () => console.log(`⚡️${APP_NAME} app listening on port ${port}`));
-app.listen(port, () => console.log(`⚡️ Quiz app listening on port ${port}`));
+app.listen(port, () => console.log(`⚡️ ${APP_NAME} app listening on port ${port}`));
 
-export default { app };
+module.exports = app ;

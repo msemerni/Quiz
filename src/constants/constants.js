@@ -14,7 +14,7 @@ const {
     PASSWORD_PATTERN
   } = process.env;
 
-  export default {
+  module.exports = {
     APP_NAME,
     PORT,
     DB_CONNECTION,

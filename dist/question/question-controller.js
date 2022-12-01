@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const app = require("../server.js");
-const protectAccess = require("./middleware/auth.js");
+const protectAccess = require("../middleware/auth.js");
 const { ShowQuestions, ShowQuestionById, CreateNewQuestion, UpdateQuestion, DeleteQuestion } = require("./question-service.js");
 // show all questions
 app.get("/question", protectAccess, (req, res) => __awaiter(void 0, void 0, void 0, function* () {

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { IGetUserAuthInfoRequest } from "../types/global"
 
-const protectAccess = async (req: IGetUserAuthInfoRequest, res: Response, next: NextFunction) => {
+const protectAccess = async (req, res, next) => {
   const { user } = req.session;
 
   if (!user) {

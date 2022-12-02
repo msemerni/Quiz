@@ -22,7 +22,7 @@ const SignUp = async (req: Request, res: Response) => {
     req.session.user = newUser;
     res.status(201).send({ login: newUser.login, nick: newUser.nick });
   } catch (error) {
-    /////// НЕ ВЫВОДИТ ОШИБКУ .json({ error })
+    ///////! НЕ ВЫВОДИТ ОШИБКУ .json({ error })
     console.log(error);
     res.status(500).json({ error });
   }

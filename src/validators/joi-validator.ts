@@ -29,5 +29,5 @@ const joiSchema = Joi.object({
       .default('anon')
   });
 
-  module.exports = joiSchema;
+  export { joiSchema };
   

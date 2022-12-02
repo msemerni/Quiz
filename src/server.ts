@@ -75,6 +75,4 @@ app.use(userRoutes);
 app.use(questionRoutes);
 // app.use(userRoutes, questionRoutes);
 
-
-
 app.listen(port, () => console.log(`⚡️ ${APP_NAME} app listening on port ${port}`));

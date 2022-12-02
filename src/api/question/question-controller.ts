@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-const Question = require("./question-model");
 const QuestionService = require('./question-service');
 
 const ShowQuestions = async (req: Request, res: Response) => {
@@ -7,71 +6,39 @@ const ShowQuestions = async (req: Request, res: Response) => {
     const allQuestions = await QuestionService.getQuestions();
     res.status(200).send(allQuestions);
 
-  }catch (error) {
-    res.status(500).json({ status: "error", message: "unsuccessful show questions" });
+  } catch (error: any) {
+    res.status(500).send({ error: error.message });
   }
-};
+}
 
 const ShowQuestionById = async (req: Request, res: Response) => {
   try {
-    res.send(await QuestionService.getQuestionById(req.params.id));
+    const questionById = await QuestionService.getQuestionById(req.params.id)
+    res.status(200).send(questionById);
 
-  }catch (error) {
-    res.status(500).json({ status: "error", message: "unsuccessful show question by ID" });
+  } catch (error: any) {
+    res.status(500).send({ error: error.message });
   }
 }
 
-const CreateNewQuestion = async (req: Request, res: Response) => {
+const UpsertQuestion = async (req: Request, res: Response) => {
   try {
-    res.status(201).send(await QuestionService.createQuestion(req.body));
+    const question = await QuestionService.upsertQuestion(req.body);
+    res.status(200).send(question);
 
-  }catch (error) {
-    res.status(500).json({ status: "error", message: "unsuccessful create question" });
-  }
-}
-
-const UpdateQuestion = async (req: Request, res: Response) => {
-  try {
-    const _id = req.params.id;
-    const { title, answers } = req.body;
-    const question = await Question.findOne({ _id });
-
-    if (!question) {
-      const newQuestion = new Question(req.body);
-      await newQuestion.save();
-      res.status(201).send(newQuestion);
-    }else {
-      if (title) {
-        question.title = title;
-      }
-
-      if (answers) {
-        question.answers = answers;
-      }
-
-      await question.save();
-      res.status(200).send(question);
-    }
-  }
-  catch (error) {
-    res.status(500).json({ status: "error", message: "unsuccessful update question" });
+  } catch (error: any) {
+    res.status(500).send({ error: error.message });
   }
 }
 
 const DeleteQuestion = async (req: Request, res: Response) => {
   try {
-    res.status(200).send(await QuestionService.deleteQuestion(req.params.id));
+    const deletedQuestion = await QuestionService.deleteQuestion(req.params.id)
+    res.status(200).send(deletedQuestion);
 
-  }catch (error) {
-    /////// КАК ОТПРАВИТЬ ОШИБКУ? .json({ error })
-    res.status(500).json({ status: "error", message: "unsuccessful delete question" });
+  } catch (error: any) {
+    res.status(500).send({ error: error.message });
   }
-
 }
-module.exports = {
-  ShowQuestions,
-  ShowQuestionById,
-  CreateNewQuestion,
-  UpdateQuestion,
-  DeleteQuestion
-};
+
+module.exports = { ShowQuestions, ShowQuestionById, UpsertQuestion, DeleteQuestion };

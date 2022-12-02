@@ -8,6 +8,7 @@ const protectAccess = async (req: IGetUserAuthInfoRequest, res: Response, next: 
   if (!user) {
     return res.status(401).send({ status: "error", message: "unauthorized user" });
   }
+  
   req.user = user;
   next();
 };

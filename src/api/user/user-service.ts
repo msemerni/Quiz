@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 import { Hash } from 'crypto';
 const User = require("./user-model");
 const mongoose = require("mongoose");
-// import { IUser } from "./types/user-type";
+// import { IUser } from "./types/project-types";
 
 const createUser = async ({ login, password, nick }: { login: string, password: string, nick: string }) => {
   const passwordHash: Hash = await bcrypt.hash(password, 10);

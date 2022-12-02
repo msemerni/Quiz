@@ -6,6 +6,15 @@ export interface IUser extends Document {
     nick: String,
 }
 
+export interface IQuestion extends Document {
+    title: String,
+    answers: []
+}
+
+
+
+
+
 // type UserType = {
     
 //     save(): UserType

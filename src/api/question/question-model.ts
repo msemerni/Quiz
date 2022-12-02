@@ -1,3 +1,4 @@
+import { Request, Response } from 'express';
 const mongoose = require("mongoose");
 
 const questionSchema = new mongoose.Schema(
@@ -10,4 +11,4 @@ const questionSchema = new mongoose.Schema(
 
 const Question = mongoose.model("Question", questionSchema);
 
-export default Question;
+module.exports = Question;

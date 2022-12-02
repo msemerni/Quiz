@@ -5,6 +5,7 @@ const session = require("express-session");
 const RedisStore = require("connect-redis")(session);
 const { createClient } = require("redis");
 const userRoutes = require("./routes/userRoutes.js");
+const questionRoutes = require("./routes/questionRoutes.js");
 require('dotenv').config();
 // import { IUser } from "./types/user-type";
 
@@ -71,5 +72,9 @@ app.use(bodyParser.json());
 app.use(express.static("public"));
 
 app.use(userRoutes);
+app.use(questionRoutes);
+// app.use(userRoutes, questionRoutes);
+
+
 
 app.listen(port, () => console.log(`⚡️ ${APP_NAME} app listening on port ${port}`));

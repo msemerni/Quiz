@@ -1,83 +1,38 @@
 import { Request, Response } from 'express';
-const Question = require("./user/question-model");
+const Question = require("./question-model");
 const mongoose = require("mongoose");
 
+// import { IQuestion } from "./types/project-types";
 
-// type QuestionType = {
-//     .......
-//   }
-
-const ShowQuestions = async (res: Response) => {
-  try {
-    res.send(await Question.find());
-  }
-  catch (error) {
-    res.status(500).json({ "error": error });
-  }
+const getQuestions = async () => {
+  const allQuestions = await Question.find();
+  return allQuestions;
 }
 
-const ShowQuestionById = async (req: Request, res: Response) => {
-  try {
-    res.send(await Question.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }));
-  }
-  catch (error) {
-    res.status(500).json({ "error": error });
-  }
+const getQuestionById = async (_id: string) => {
+  const question = await Question.findOne({ _id: mongoose.Types.ObjectId(_id) });
+  return question;
 }
 
-const CreateNewQuestion = async (req: Request, res: Response) => {
-  try {
-    const newQuestion = new Question(req.body);
-    await newQuestion.save();
-    res.status(201).send(newQuestion);
-  }
-  catch (error) {
-    res.status(500).json({ "error": error });
-  }
+const createQuestion = async (question: {title: string, answers: Array<String>}) => {
+  const newQuestion = new Question(question);
+  await newQuestion.save();
+  return newQuestion;
 }
 
-const UpdateQuestion = async (req: Request, res: Response) => {
-  try {
-    const _id = req.params.id;
-    const { title, answers } = req.body;
-    const question = await Question.findOne({ _id });
+// const updateQuestion = async () => {
 
-    if (!question) {
-      const newQuestion = new Question(req.body);
-      await newQuestion.save();
-      res.status(201).send(newQuestion);
-    }
-    else {
-      if (title) {
-        question.title = title;
-      }
+// }
 
-      if (answers) {
-        question.answers = answers;
-      }
-
-      await question.save();
-      res.status(200).send(question);
-    }
-  }
-  catch (error) {
-    res.status(500).json({ "error": error });
-  }
-}
-
-const DeleteQuestion = async (req: Request, res: Response) => {
-  try {
-    res.send(await Question.findByIdAndDelete({ _id: mongoose.Types.ObjectId(req.params.id) }));
-  }
-  catch (error) {
-    res.status(500).json({ "error": error });
-  }
+const deleteQuestion = async (_id: string) => {
+  const deletedQuestion = await Question.findByIdAndDelete({ _id: mongoose.Types.ObjectId(_id) })
+  return deletedQuestion;
 }
 
 module.exports = {
-  ShowQuestions,
-  ShowQuestionById,
-  CreateNewQuestion,
-  UpdateQuestion,
-  DeleteQuestion
+  getQuestions,
+  getQuestionById,
+  createQuestion,
+  // updateQuestion,
+  deleteQuestion
 };

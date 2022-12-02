@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-const Question = require("./question-model.js");
+const Question = require("./user/question-model");
 const mongoose = require("mongoose");
 
 
@@ -7,7 +7,7 @@ const mongoose = require("mongoose");
 //     .......
 //   }
 
-const ShowQuestions = async (res) => {
+const ShowQuestions = async (res: Response) => {
   try {
     res.send(await Question.find());
   }
@@ -16,7 +16,7 @@ const ShowQuestions = async (res) => {
   }
 }
 
-const ShowQuestionById = async (req, res) => {
+const ShowQuestionById = async (req: Request, res: Response) => {
   try {
     res.send(await Question.findOne({ _id: mongoose.Types.ObjectId(req.params.id) }));
   }
@@ -25,7 +25,7 @@ const ShowQuestionById = async (req, res) => {
   }
 }
 
-const CreateNewQuestion = async (req, res) => {
+const CreateNewQuestion = async (req: Request, res: Response) => {
   try {
     const newQuestion = new Question(req.body);
     await newQuestion.save();
@@ -36,7 +36,7 @@ const CreateNewQuestion = async (req, res) => {
   }
 }
 
-const UpdateQuestion = async (req, res) => {
+const UpdateQuestion = async (req: Request, res: Response) => {
   try {
     const _id = req.params.id;
     const { title, answers } = req.body;
@@ -65,7 +65,7 @@ const UpdateQuestion = async (req, res) => {
   }
 }
 
-const DeleteQuestion = async (req, res) => {
+const DeleteQuestion = async (req: Request, res: Response) => {
   try {
     res.send(await Question.findByIdAndDelete({ _id: mongoose.Types.ObjectId(req.params.id) }));
   }

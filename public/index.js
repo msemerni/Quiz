@@ -154,6 +154,18 @@ const logoutUser = async () => {
     .then((json) => { console.log(json) });
 };
 
+//delete user
+const deleteUser = async (_id) => {
+  fetch(`/user/delete/${_id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => console.log(json));
+}
+
 const loginForm = document.createElement("form");
 loginForm.classList = 'm-auto px-2 w-100 h-100 text-center bg-light';
 
@@ -225,7 +237,11 @@ const signupBtn = document.createElement("button");
 signupBtn.classList = "btn btn-outline-primary m-2";
 signupBtn.innerText = "SignUp";
 
-btnDiv.append(loginBtn, logoutBtn, signupBtn);
+const deleteUserBtn = document.createElement("button");
+deleteUserBtn.classList = "btn btn-outline-danger m-2";
+deleteUserBtn.innerText = "Delete";
+
+btnDiv.append(loginBtn, logoutBtn, signupBtn, deleteUserBtn);
 
 loginForm.append(loginDiv, passwordDiv, passwordConfirmDiv, nickDiv, btnDiv);
 
@@ -243,6 +259,11 @@ logoutBtn.addEventListener("click", function (e) {
 signupBtn.addEventListener("click", function (e) {
   e.preventDefault();
   registerNewUser();
+});
+
+deleteUserBtn.addEventListener("click", function (e) {
+  e.preventDefault();
+  deleteUser(loginInput.value);
 });
 
 const btnAdd = document.createElement("button");

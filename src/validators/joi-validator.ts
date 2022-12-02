@@ -1,9 +1,10 @@
-const { PASSWORD_PATTERN } = require("./constants/constants.js");
+// const { PASSWORD_PATTERN } = require("./constants/constants.js");
+// const { PASSWORD_PATTERN } = process.env;
 
 const Joi = require('joi');
 
 const joiSchema = Joi.object({
-
+    
     login: Joi
       .string()
       .required()
@@ -12,12 +13,14 @@ const joiSchema = Joi.object({
     password: Joi
       .string()
       .required()
-      .pattern(new RegExp(PASSWORD_PATTERN)),
+      // .pattern(new RegExp(PASSWORD_PATTERN)),
+      .pattern(new RegExp("^\w{3,20}$")),
   
     confirmPassword: Joi
       .string()
       .required()
-      .pattern(new RegExp(PASSWORD_PATTERN)),
+      // .pattern(new RegExp(PASSWORD_PATTERN)),
+      .pattern(new RegExp("^\w{3,20}$")),
   
     nick: Joi
       .string()
@@ -26,4 +29,5 @@ const joiSchema = Joi.object({
       .default('anon')
   });
 
-  export default joiSchema;
+  module.exports = joiSchema;
+  

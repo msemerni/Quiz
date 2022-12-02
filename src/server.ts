@@ -1,11 +1,13 @@
-// const initDB =require("./tempfolder/baza");
 const mongoose = require("mongoose");
-// import express, { Express, Request, Response } from 'express';
-const express = require("express");
+import express, { Express, Request, Response, NextFunction } from 'express';
 const bodyParser = require("body-parser");
 const session = require("express-session");
 const RedisStore = require("connect-redis")(session);
 const { createClient } = require("redis");
+const userRoutes = require("./routes/userRoutes.js");
+require('dotenv').config();
+// import { IUser } from "./types/user-type";
+
 const {
   APP_NAME,
   PORT,
@@ -17,16 +19,15 @@ const {
   REDIS_HOST,
   REDIS_PORT,
   SESSION_SECRET,
-} = require("./constants/constants.js");
+  PASSWORD_PATTERN
+} = process.env;
 
-
-const app = express();
 const dbOptions = {
   useNewUrlParser: true,
 };
+
 const port = PORT || 3000;
-// const dbConnectionUrl = `${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
-const dbConnectionUrl = `mongodb://127.0.0.1:27017/quizdb`;
+const dbConnectionUrl = `${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
 
 mongoose.connect(dbConnectionUrl, dbOptions);
 
@@ -37,43 +38,38 @@ db.once("open", () => console.log("⚡️ Mongo connected"));
 
 let redisClient = createClient({
   legacyMode: true,
-  // url: `${REDIS_NAME}://${REDIS_HOST}:${REDIS_PORT}`
-  url: `redis://127.0.0.1:6379`
+  url: `${REDIS_NAME}://${REDIS_HOST}:${REDIS_PORT}`
 });
 
 redisClient.connect().then(console.log("⚡️ Redis connected"));
+
+redisClient.on("error", console.error.bind(console, "Error connection to Redis:"));
+
+const app: Express = express();
 
 app.use(
   session({
     store: new RedisStore({ client: redisClient }),
     resave: false,
-    rolling: true, 
+    rolling: true,
     saveUninitialized: false,
-    // secret: SESSION_SECRET,
-    secret: "somesecretkey",
+    secret: SESSION_SECRET,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24
     }
   }));
 
-app.use((req, res, next) => {
+app.use(function (req: Request, res: Response, next: NextFunction) {
   if (!req.session) {
     return next(new Error("oh no"));
   }
   next();
 })
 
-redisClient.on("error", console.error.bind(console, "Error connection to Redis:"));
-
 app.use(bodyParser.json());
 
 app.use(express.static("public"));
 
-/////////////////////
-// Question.insertMany(initDB);
-/////////////////////
+app.use(userRoutes);
 
-// app.listen(port, () => console.log(`⚡️${APP_NAME} app listening on port ${port}`));
 app.listen(port, () => console.log(`⚡️ ${APP_NAME} app listening on port ${port}`));
-
-module.exports = app ;

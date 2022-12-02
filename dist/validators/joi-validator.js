@@ -1,6 +1,6 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const { PASSWORD_PATTERN } = require("./constants/constants.js");
+// const { PASSWORD_PATTERN } = require("./constants/constants.js");
+// const { PASSWORD_PATTERN } = process.env;
 const Joi = require('joi');
 const joiSchema = Joi.object({
     login: Joi
@@ -10,15 +10,17 @@ const joiSchema = Joi.object({
     password: Joi
         .string()
         .required()
-        .pattern(new RegExp(PASSWORD_PATTERN)),
+        // .pattern(new RegExp(PASSWORD_PATTERN)),
+        .pattern(new RegExp("^\w{3,20}$")),
     confirmPassword: Joi
         .string()
         .required()
-        .pattern(new RegExp(PASSWORD_PATTERN)),
+        // .pattern(new RegExp(PASSWORD_PATTERN)),
+        .pattern(new RegExp("^\w{3,20}$")),
     nick: Joi
         .string()
         .empty('')
         .max(50)
         .default('anon')
 });
-exports.default = joiSchema;
+module.exports = joiSchema;

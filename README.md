@@ -1,4 +1,4 @@
-
+1)
 docker-compose up --build
 docker-compose down
 

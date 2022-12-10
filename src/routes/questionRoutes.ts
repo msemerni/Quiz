@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { GetQuestions, GetQuestionById, UpsertQuestion, DeleteQuestion } from "../api/question/question-controller";
+import { GetAllQuestions, GetQuestionById, UpsertQuestion, DeleteQuestion } from "../api/question/question-controller";
 
 const protectAccess = require("../middleware/auth.js");
 
 const router: Router = Router();
 
-router.get("/question", protectAccess, GetQuestions);
+router.get("/question", protectAccess, GetAllQuestions);
 
 router.get("/question/:id", protectAccess, GetQuestionById);
 

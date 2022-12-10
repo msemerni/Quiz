@@ -4,7 +4,7 @@ import { IQuestion } from "../../types/project-types";
 
 const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
   try {
-    const allQuestions: Array<IQuestion> | null = await QuestionService.getQuestions();
+    const allQuestions: Array<IQuestion> | null = await QuestionService.getAllQuestions();
     res.status(200).send(allQuestions);
 
   } catch (error: any) {

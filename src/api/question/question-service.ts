@@ -1,7 +1,7 @@
 import { Question } from "./question-model";
 import { IQuestion } from "../../types/project-types";
 
-const getQuestions = async (): Promise<Array<IQuestion> | null>  => {
+const getAllQuestions = async (): Promise<Array<IQuestion> | null>  => {
   const allQuestions: Array<IQuestion> | null  = await Question.find();
   return allQuestions;
 }
@@ -36,4 +36,4 @@ const deleteQuestion = async (_id: string): Promise<IQuestion | null> => {
   return deletedQuestion;
 }
 
-export = { getQuestions, getQuestionById, upsertQuestion, deleteQuestion };
+export = { getAllQuestions, getQuestionById, upsertQuestion, deleteQuestion };

@@ -1,13 +1,16 @@
-const mongoose = require("mongoose");
 import express, { Express, Request, Response, NextFunction } from 'express';
-const bodyParser = require("body-parser");
-const session = require("express-session");
-const RedisStore = require("connect-redis")(session);
-const { createClient } = require("redis");
-const userRoutes = require("./routes/userRoutes.js");
-const questionRoutes = require("./routes/questionRoutes.js");
+import bodyParser from "body-parser";
+import session from "express-session";
+import { router as userRoutes } from "./routes/userRoutes.js";
+import { router as questionRoutes } from "./routes/questionRoutes.js";
 require('dotenv').config();
-// import { IUser } from "./types/user-type";
+
+/////////////////////////////////////
+//// Login:
+//// q@com.ua
+//// Password:
+//// qqq
+/////////////////////////////////////
 
 const {
   APP_NAME,
@@ -20,12 +23,14 @@ const {
   REDIS_HOST,
   REDIS_PORT,
   SESSION_SECRET,
-  PASSWORD_PATTERN
 } = process.env;
 
 const dbOptions = {
   useNewUrlParser: true,
 };
+
+const mongoose = require("mongoose");
+mongoose.set('strictQuery', true);
 
 const port = PORT || 3000;
 const dbConnectionUrl = `${DB_CONNECTION}://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`;
@@ -37,7 +42,10 @@ const db = mongoose.connection;
 db.on("error", console.error.bind(console, "Connection error:"));
 db.once("open", () => console.log("⚡️ Mongo connected"));
 
-let redisClient = createClient({
+const { createClient } = require("redis");
+const RedisStore = require("connect-redis")(session);
+
+const redisClient = createClient({
   legacyMode: true,
   url: `${REDIS_NAME}://${REDIS_HOST}:${REDIS_PORT}`
 });
@@ -54,7 +62,7 @@ app.use(
     resave: false,
     rolling: true,
     saveUninitialized: false,
-    secret: SESSION_SECRET,
+    secret: SESSION_SECRET!,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24
     }
@@ -71,8 +79,6 @@ app.use(bodyParser.json());
 
 app.use(express.static("public"));
 
-app.use(userRoutes);
-app.use(questionRoutes);
-// app.use(userRoutes, questionRoutes);
+app.use(userRoutes, questionRoutes);
 
 app.listen(port, () => console.log(`⚡️ ${APP_NAME} app listening on port ${port}`));

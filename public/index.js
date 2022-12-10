@@ -120,7 +120,6 @@ const registerNewUser = async () => {
     body: JSON.stringify({
       login: loginInput.value,
       password: passwordInput.value,
-      confirmPassword: passwordConfirmInput.value,
       nick: nickInput.value,
     }),
     headers: {
@@ -268,10 +267,10 @@ deleteUserBtn.addEventListener("click", function (e) {
 
 const btnAdd = document.createElement("button");
 btnAdd.innerText = "Create Question";
-btnAdd.className = "btn btn-outline-success m-2 w-25 align-self-center";
+btnAdd.className = "btn btn-outline-success m-2 align-self-center";
 const btnShowQuestions = document.createElement("button");
 btnShowQuestions.innerText = "Show Questions";
-btnShowQuestions.className = "btn btn-outline-success m-2 w-25 align-self-center";
+btnShowQuestions.className = "btn btn-outline-success m-2 align-self-center";
 document.getElementById("create_el").append(btnShowQuestions, btnAdd);
 
 const openNewQuestionField = () => {

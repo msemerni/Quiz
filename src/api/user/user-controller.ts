@@ -1,25 +1,32 @@
-import { Request, Response } from 'express';
-import {joiSchema} from "../../validators/joi-validator";
-const UserService = require('./user-service');
+import { Request, Response } from "express";
+import { validateUserData } from "../../validators/joi-validator";
+import UserService from "./user-service";
+import { IUser } from "../../types/project-types";
+import Joi from "joi";
+import { ObjectId } from "mongodb";
 
-const SignUp = async (req: Request, res: Response) => {
+const SignUp = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { login, password, nick }: { login: string, password: string, nick: string } = req.body;
-    const isNotValidNewUser = joiSchema.validate({ login, password, nick }).error;
+    const user: IUser = req.body;
+    const {login, password, nick}: { login: string, password: string, nick?: string} = user;
+    const isValidNewUser: Joi.ValidationResult<IUser> = validateUserData(user);
 
-    if (!isNotValidNewUser) {
-      return res.status(401).send(isNotValidNewUser.details[0]);
+    if (isValidNewUser.error) {
+      res.status(401).send(isValidNewUser);
+      return;
     }
 
-    const user = await UserService.findUser({ login });
+    const userDB: IUser | null = await UserService.findUser({ login });
 
-    if (user) {
-      return res.status(401).send({ status: "error", message: "user already exist" });
+    if (userDB) {
+      res.status(401).send({ status: "error", message: "user already exist" });
+      return;
     }
 
-    const newUser = await UserService.createUser({ login, password, nick: nick || "anon" })
+    const newUser: IUser = await UserService.createUser({ login, password, nick: nick || "anon" })
     req.session.user = newUser;
-    const savedUser = { login: newUser.login, nick: newUser.nick }
+
+    const savedUser: {login: string, nick: string | undefined} = { login: newUser.login, nick: newUser.nick }
     res.status(201).send(savedUser);
 
   } catch (error: any) {
@@ -27,21 +34,23 @@ const SignUp = async (req: Request, res: Response) => {
   }
 };
 
-const LogIn = async (req: Request, res: Response) => {
+const LogIn = async (req: Request, res: Response): Promise<void> => {
   try {
     const { login, password }: { login: string, password: string} = req.body;
-    const user = await UserService.findUser({ login });
+    const user: IUser | null = await UserService.findUser({ login });
 
     if (!user) {
-      return res.status(401).send({ status: "error", message: "user not found" });
+      res.status(401).send({ status: "error", message: "user not found" });
+      return;
     }
 
-    const isCorrectPassword = await UserService.isCorrectPassword({ login, password });
+    const isCorrectPassword: boolean = await UserService.isCorrectPassword({ login, password });
 
     if (isCorrectPassword) {
       req.session.user = user;
-      const authorizedUser = { _id: user._id, login: user.login, nick: user.nick };
-      return res.status(200).send(authorizedUser);
+      const authorizedUser: { _id: ObjectId, login: string, nick?: string} = { _id: user._id, login: user.login, nick: user.nick };
+      res.status(200).send(authorizedUser);
+      return
     }
 
     res.status(401).send({ status: "error", message: "wrong password" });
@@ -51,7 +60,7 @@ const LogIn = async (req: Request, res: Response) => {
   }
 }
 
-const LogOut = async (req: Request, res: Response) => {
+const LogOut = async (req: Request, res: Response): Promise<void> => {
   try {
     req.session.destroy(() => {
       res.status(200).json({ status: "success", message: "logout success" })
@@ -62,10 +71,15 @@ const LogOut = async (req: Request, res: Response) => {
   }
 }
 
-const DeleteUser = async (req: Request, res: Response) => {
+const DeleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await UserService.deleteUser(req.params.id);
-    const deletedUser = { _id: user._id, login: user.login, nick: user.nick };
+    const user: IUser | null = await UserService.deleteUser(req.params.id);
+
+    if (user === null) {
+      return;
+    }
+
+    const deletedUser: { _id: ObjectId, login: string, nick?: string} = { _id: user._id, login: user.login, nick: user.nick };
     res.status(200).send(deletedUser);
     
   } catch (error: any) {
@@ -73,4 +87,4 @@ const DeleteUser = async (req: Request, res: Response) => {
   }
 }
 
-module.exports = { SignUp, LogIn, LogOut, DeleteUser };
+export { SignUp, LogIn, LogOut, DeleteUser };

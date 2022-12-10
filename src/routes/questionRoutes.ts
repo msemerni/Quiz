@@ -1,6 +1,7 @@
 import { Router } from "express";
+import { ShowQuestions, ShowQuestionById, UpsertQuestion, DeleteQuestion } from "../api/question/question-controller";
+
 const protectAccess = require("../middleware/auth.js");
-const { ShowQuestions, ShowQuestionById, UpsertQuestion, DeleteQuestion } = require("../api/question/question-controller");
 
 const router: Router = Router();
 
@@ -15,4 +16,4 @@ router.put("/question/:id", protectAccess, UpsertQuestion);
 router.delete("/question/:id", protectAccess, DeleteQuestion);
 
 
-module.exports = router;
+export { router };

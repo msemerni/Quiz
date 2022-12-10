@@ -1,30 +1,36 @@
-const bcrypt = require('bcryptjs');
-import { Hash } from 'crypto';
-const User = require("./user-model");
-const mongoose = require("mongoose");
-// import { IUser } from "./types/project-types";
+import bcrypt from "bcryptjs";
+import { User } from "./user-model";
+import { IUser } from "../../types/project-types";
+const { SALT } = process.env;
 
-const createUser = async ({ login, password, nick }: { login: string, password: string, nick: string }) => {
-  const passwordHash: Hash = await bcrypt.hash(password, 10);
-  const newUser = await new User({ login, password: passwordHash, nick });
+const createUser = async ({ login, password, nick }: 
+                          { login: string, password: string, nick: string }): Promise<IUser> => {
+  const passwordHash: string = await bcrypt.hash(password, SALT as string);
+  const newUser: IUser = await User.create({ login, password: passwordHash, nick });
   await newUser.save();
   return newUser;
 }
 
-const findUser = async ({ login }: { login: string }) => {
-  const user = await User.findOne({ login });
+const findUser = async ({ login }: { login: string }): Promise<IUser | null> => {
+  const user: IUser | null = await User.findOne({ login });
   return user;
 }
 
-const isCorrectPassword = async ({ login, password }: { login: string, password: string }) => {
-  const user = await User.findOne({ login });
-  const isCorrectPassword = await bcrypt.compare(password, user.password);
+const isCorrectPassword = async ({ login, password }: 
+                                 { login: string, password: string }): Promise<boolean> => {
+  const user: IUser | null = await User.findOne({ login });
+
+  if (user === null) {
+    return false;
+  }
+
+  const isCorrectPassword: boolean = await bcrypt.compare(password, user.password);
   return isCorrectPassword;
 }
 
-const deleteUser = async (_id: string) => {
-  const user = await User.findByIdAndDelete({ _id: mongoose.Types.ObjectId(_id) })
+const deleteUser = async (_id: string): Promise<IUser | null> => {
+  const user: IUser | null = await User.findByIdAndDelete({ _id });
   return user;
 }
 
-module.exports = { createUser, findUser, isCorrectPassword, deleteUser };
+export = { createUser, findUser, isCorrectPassword, deleteUser };

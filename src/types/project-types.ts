@@ -1,22 +1,16 @@
 import { Document } from "mongoose";
 
 export interface IUser extends Document {
-    login: String,
-    password: String,
-    nick: String,
+    login: string,
+    password: string,
+    nick?: string,
+}
+
+type Answer = {
+    answers: { [key: string]: string };
 }
 
 export interface IQuestion extends Document {
-    title: String,
-    answers: []
+    title: string,
+    answers: Answer;
 }
-
-
-
-
-
-// type UserType = {
-    
-//     save(): UserType
-//     // [key: string]: string
-//   }

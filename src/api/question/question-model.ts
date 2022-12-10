@@ -1,14 +1,18 @@
-import { Request, Response } from 'express';
-const mongoose = require("mongoose");
+import { model, Schema, Model } from "mongoose";
+import { IQuestion } from "../../types/project-types";
 
-const questionSchema = new mongoose.Schema(
+const questionSchema: Schema<IQuestion> = new Schema<IQuestion>(
   {
-    title: String,
-    answers: []
+    title: { 
+      type: String, 
+      required: true },
+    answers: { 
+      type: Array, 
+      required: true }
   },
   { versionKey: false }
 );
 
-const Question = mongoose.model("Question", questionSchema);
+const Question: Model<IQuestion> = model<IQuestion>('Question', questionSchema);
 
-module.exports = Question;
+export { Question };

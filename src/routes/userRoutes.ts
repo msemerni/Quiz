@@ -1,6 +1,7 @@
 import { Router } from "express";
+import { SignUp, LogIn, LogOut, DeleteUser } from "../api/user/user-controller";
+
 const protectAccess = require("../middleware/auth.js");
-const { SignUp, LogIn, LogOut, DeleteUser } = require("../api/user/user-controller");
 
 const router: Router = Router();
 
@@ -13,4 +14,4 @@ router.get("/user/logout", LogOut);
 router.delete("/user/delete/:id", protectAccess, DeleteUser);
 
 
-module.exports = router;
+export { router };

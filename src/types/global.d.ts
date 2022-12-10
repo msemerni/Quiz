@@ -1,44 +1,14 @@
 
 import "express-session";
 import { Request } from "express"
+import { IUser } from "../types/project-types";
 
 declare module 'express-session' {
   export interface Session {
-    user: { [key: string]: string };
+    user: IUser;
   }
 }
 
 export interface IGetUserAuthInfoRequest extends Request {
-  user: { [key: string]: string };
+  user: IUser;
 }
-
-// declare module 'express-session' {
-//   export interface Request {
-//     user: { [key: string]: string };
-//   }
-// }
-
-// declare namespace Express {
-//   export interface Request {
-//     user: { [key: string]: string };
-//   }
-//   export interface Response {
-//     user: { [key: string]: string };
-//   }
-// }
-
-
-// declare namespace Session {
-//   export interface Request {
-//     user: { [key: string]: string };
-//   }
-//   export interface Response {
-//     user: { [key: string]: string };
-//   }
-// }
-
-// declare module "express-session" {
-//   export interface SessionData {
-//     user: string;
-//   }
-// }

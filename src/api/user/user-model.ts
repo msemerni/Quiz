@@ -1,15 +1,21 @@
-import { Request, Response } from 'express';
-const mongoose = require("mongoose");
+import { model, Schema, Model } from 'mongoose';
+import { IUser } from "../../types/project-types";
 
-const userSchema = new mongoose.Schema(
+const userSchema: Schema<IUser> = new Schema<IUser>(
   {
-    login: String,
-    password: String,
-    nick: String,
+    login: { 
+      type: String, 
+      required: true },
+    password: { 
+      type: String, 
+      required: true },
+    nick: { 
+      type: String, 
+      required: false }
   },
   { versionKey: false }
-);
+  );
 
-const User = mongoose.model("User", userSchema);
+const User: Model<IUser> = model<IUser>('User', userSchema);
 
-module.exports = User;
+export { User };

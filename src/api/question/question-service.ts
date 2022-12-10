@@ -1,23 +1,21 @@
-import { Request, Response } from 'express';
-const Question = require("./question-model");
-const mongoose = require("mongoose");
-// import { IQuestion } from "./types/project-types";
+import { Question } from "./question-model";
+import { IQuestion } from "../../types/project-types";
 
-const getQuestions = async () => {
-  const allQuestions = await Question.find();
+const getAllQuestions = async (): Promise<Array<IQuestion> | null>  => {
+  const allQuestions: Array<IQuestion> | null  = await Question.find();
   return allQuestions;
 }
 
-const getQuestionById = async (_id: string) => {
-  const question = await Question.findOne({ _id: mongoose.Types.ObjectId(_id) });
+const getQuestionById = async (_id: string): Promise<IQuestion | null> => {
+  const question: IQuestion | null = await Question.findOne({ _id });
   return question;
 }
 
-const upsertQuestion = async (upsertQuestion: any) => {
-  const question = await Question.findOne({ _id: mongoose.Types.ObjectId(upsertQuestion._id) });
+const upsertQuestion = async (upsertQuestion: IQuestion): Promise<IQuestion | null> => {
+  const question: IQuestion | null = await Question.findOne({ _id: upsertQuestion._id });
 
   if (!question) {
-    const newQuestion = new Question(upsertQuestion);
+    const newQuestion: IQuestion = new Question(upsertQuestion);
     await newQuestion.save();
     return newQuestion;
 
@@ -33,9 +31,9 @@ const upsertQuestion = async (upsertQuestion: any) => {
   }
 }
 
-const deleteQuestion = async (_id: string) => {
-  const deletedQuestion = await Question.findByIdAndDelete({ _id: mongoose.Types.ObjectId(_id) })
+const deleteQuestion = async (_id: string): Promise<IQuestion | null> => {
+  const deletedQuestion: IQuestion | null = await Question.findByIdAndDelete({ _id })
   return deletedQuestion;
 }
 
-module.exports = { getQuestions, getQuestionById, upsertQuestion, deleteQuestion };
+export = { getAllQuestions, getQuestionById, upsertQuestion, deleteQuestion };

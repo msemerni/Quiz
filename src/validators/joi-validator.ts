@@ -1,9 +1,9 @@
-// const { PASSWORD_PATTERN } = require("./constants/constants.js");
-// const { PASSWORD_PATTERN } = process.env;
+import { IUser } from "../types/project-types";
+import Joi from "joi";
+const { PASSWORD_PATTERN } = process.env;
 
-const Joi = require('joi');
-
-const joiSchema = Joi.object({
+const validateUserData = (user: IUser): Joi.ValidationResult<IUser> => {
+  const joiSchema: Joi.ObjectSchema<IUser> = Joi.object({
     
     login: Joi
       .string()
@@ -13,15 +13,8 @@ const joiSchema = Joi.object({
     password: Joi
       .string()
       .required()
-      // .pattern(new RegExp(PASSWORD_PATTERN)),
-      .pattern(new RegExp("^\w{3,20}$")),
-  
-    confirmPassword: Joi
-      .string()
-      .required()
-      // .pattern(new RegExp(PASSWORD_PATTERN)),
-      .pattern(new RegExp("^\w{3,20}$")),
-  
+      .pattern(new RegExp(PASSWORD_PATTERN as string)),
+   
     nick: Joi
       .string()
       .empty('')
@@ -29,5 +22,7 @@ const joiSchema = Joi.object({
       .default('anon')
   });
 
-  export { joiSchema };
-  
+  return joiSchema.validate(user);
+};
+
+export { validateUserData };

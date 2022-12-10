@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import QuestionService from "./question-service";
 import { IQuestion } from "../../types/project-types";
 
-const ShowQuestions = async (req: Request, res: Response): Promise<void> => {
+const GetQuestions = async (req: Request, res: Response): Promise<void> => {
   try {
     const allQuestions: Array<IQuestion> | null = await QuestionService.getQuestions();
     res.status(200).send(allQuestions);
@@ -12,7 +12,7 @@ const ShowQuestions = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-const ShowQuestionById = async (req: Request, res: Response): Promise<void> => {
+const GetQuestionById = async (req: Request, res: Response): Promise<void> => {
   try {
     const questionById: IQuestion | null = await QuestionService.getQuestionById(req.params.id)
     res.status(200).send(questionById);
@@ -42,4 +42,4 @@ const DeleteQuestion = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-export { ShowQuestions, ShowQuestionById, UpsertQuestion, DeleteQuestion };
+export { GetQuestions, GetQuestionById, UpsertQuestion, DeleteQuestion };

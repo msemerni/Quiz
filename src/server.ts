@@ -82,3 +82,5 @@ app.use(express.static("public"));
 app.use(userRoutes, questionRoutes);
 
 app.listen(port, () => console.log(`⚡️ ${APP_NAME} app listening on port ${port}`));
+
+export { redisClient };

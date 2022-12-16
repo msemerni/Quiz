@@ -6,11 +6,31 @@ export interface IUser extends Document {
     nick?: string,
 }
 
-type Answer = {
-    answers: { [key: string]: string };
-}
-
 export interface IQuestion extends Document {
     title: string,
-    answers: Answer;
+    answers: Answer
+}
+
+export interface IUserQuestion {
+    _id: string,
+    title: string,
+    answers: Array<String>
+}
+
+export interface IDBQuestion {
+    _id: string,
+    title: string,
+    answers: Array<Answer>
+}
+
+export interface Answer {
+    [key: string]: Boolean
+}
+
+export interface AnswerReview {
+    _id: string,
+    title: string,
+    userAnswer: string
+    correctAnswer: string
+    isCorrectAnswer: Boolean
 }

@@ -1,65 +1,113 @@
 import { Question } from "./question-model";
 import { IQuestion, IUserQuestion, IDBQuestion, Answer, AnswerReview } from "../../types/project-types";
 import { redisClient } from "../../server";
+import { promisify } from "util";
+// import RedisService from "./question-redis-service";
 const { QUIZ_QUESTION_QUANTITY } = process.env;
 
 
-const getAllQuestions = async (): Promise<Array<IDBQuestion> | null>  => {
-  const allQuestions: Array<IDBQuestion> | null  = await Question.find();
+const getAllQuestions = async (): Promise<Array<IDBQuestion> | null> => {
+  const allQuestions: Array<IDBQuestion> | null = await Question.find();
   return allQuestions;
 }
 
 
-const saveQuizQuestionsToRedis = async (): Promise<void>  => {
-  const quizQuestions: Array<IDBQuestion> | null = await getRandomQuizQuestions();
-  await redisClient.set("quizQuest", JSON.stringify(quizQuestions));
+const startQuiz = async (): Promise<void> => {
+  const quizQuestions: Array<IDBQuestion> | null = await getRandomQuizQuestions(+QUIZ_QUESTION_QUANTITY!);
+  await redisClient.set("quizQuestions", JSON.stringify(quizQuestions));
+  await redisClient.set("currentQuestionNumber", 0);
+  await redisClient.set("correctAnswersCount", 0);
+}
+
+
+const getCurrentQuestionNumber = async (): Promise<string | null> => {
+  const getPromiseFromRedis: Function = promisify(redisClient.get).bind(redisClient);
+  const questionNumber: Promise<string | null> = await getPromiseFromRedis("currentQuestionNumber");
+  // const questionNumber: Promise<string | null> = await RedisService.getFromRedis("currentQuestionNumber");
+
+  return questionNumber;
+}
+
+
+const getCorrectAnswerCount = async (): Promise<string | null> => {
+  const getPromiseFromRedis: Function = promisify(redisClient.get).bind(redisClient);
+  const correctAnswerCount: Promise<string | null> = await getPromiseFromRedis("correctAnswersCount");
+  return correctAnswerCount;
+}
+
+
+const saveCorrectAnswersCountToRedis = async (): Promise<void> => {
+  const correctAnswerCount: string | null = await getCorrectAnswerCount();
+
+  if (!correctAnswerCount) {
+    throw new Error("Correct answers count not found");
+  }
+
+  await redisClient.set("correctAnswersCount", +correctAnswerCount + 1);
+}
+
+
+const saveNextQuestionNumberToRedis = async (): Promise<void | null> => {
+  const questions: Array<IDBQuestion> | null = await getAllQuestionFromRedis();
+  const currentQuestionNum: string | null = await getCurrentQuestionNumber();
+
+  if (!questions || !currentQuestionNum) {
+    throw new Error("No correspondent question in Redis");
+  }
+
+  await redisClient.set("currentQuestionNumber", +currentQuestionNum + 1);
 }
 
 
 const checkAnswerResult = async (_id: string, userAnswer: string = ""): Promise<AnswerReview | null> => {
   const questions: Array<IDBQuestion> | null = await getAllQuestionFromRedis();
+  const currentQuestionNum: string | null = await getCurrentQuestionNumber();
 
-  if (!questions) {
-    return null;
+  if (!questions || !currentQuestionNum || +currentQuestionNum >= questions.length) {
+    throw new Error("No correspondent question in Redis");
   }
 
-  let title: string = "";
-  let correctAnswer: string = "";
+  const currentQuestion: IDBQuestion | undefined = questions.find(question => question._id === _id);
+  if (!currentQuestion || !currentQuestion.answers) {
+    throw new Error("No correspondent question in Redis");
+  }
+
+  const correctAnswer: Answer | undefined = currentQuestion.answers.find(answer => Object.values(answer)[0] === true);
+  if (!correctAnswer) {
+    throw new Error("Correct answer not found in Redis");
+  }
+
   let isCorrectAnswer: boolean = false;
 
-  for (let i: number = 0; i < questions.length; i++) {
-    if (_id === questions[i]._id) {
-      for (let j: number = 0; j < questions[i].answers.length; j++) {
-        for (const [key, value] of Object.entries(questions[i].answers[j])) {
-          if (value === true) {
-            if (userAnswer === key) {
-              isCorrectAnswer = true;
-            }
-            correctAnswer = key;
-          }
-        }
-      }
-      title = questions[i].title;
-    }
+  if (Object.keys(correctAnswer)[0] === userAnswer) {
+    isCorrectAnswer = true;
+    await saveCorrectAnswersCountToRedis();
   }
+
+  const title: string = currentQuestion.title;
 
   const answerReview: AnswerReview = {
     _id: _id,
     title: title,
     userAnswer: userAnswer,
-    correctAnswer: correctAnswer,
+    correctAnswer: Object.keys(correctAnswer)[0],
     isCorrectAnswer: isCorrectAnswer
   };
 
+  await saveNextQuestionNumberToRedis();
   return answerReview;
 }
 
 
-const getRandomQuizQuestions = async (questionQuantity: number = +QUIZ_QUESTION_QUANTITY!): Promise<Array<IDBQuestion> | null> => {
-    const questions: Array<IDBQuestion> | null = await Question.aggregate(
-      [{ $sample: { size: questionQuantity } }]
-    )
-   return questions;
+const getRandomQuizQuestions = async (questionQuantity: number): Promise<Array<IDBQuestion> | null> => {
+  if (!questionQuantity) {
+    questionQuantity = 1;
+  }
+
+  const questions: Array<IDBQuestion> | null = await Question.aggregate(
+    [{ $sample: { size: questionQuantity } }]
+  )
+  return questions;
 }
 
 
@@ -71,7 +119,7 @@ const getQuestionById = async (_id: string): Promise<IDBQuestion | null> => {
 
 const getAllQuestionFromRedis = async (): Promise<Array<IDBQuestion> | null> => {
   return new Promise((resolve, reject) => {
-    redisClient.get('quizQuest', (err: any, keys: string | null) => {
+    redisClient.get('quizQuestions', (err: any, keys: string | null) => {
       if (err) {
         reject(err);
       }
@@ -81,30 +129,33 @@ const getAllQuestionFromRedis = async (): Promise<Array<IDBQuestion> | null> => 
       }
 
       const questions: Array<IDBQuestion> = JSON.parse(keys!);
-      
       resolve(questions);
     });
   })
 }
 
 
-const getOneQuestionFromRedis = async (questionNumber: number): Promise<IDBQuestion | null> => {
+const getOneQuestionFromRedis = async (): Promise<IDBQuestion | null> => {
   const questions: Array<IDBQuestion> | null = await getAllQuestionFromRedis();
+  const currentQuestionNum: string | null = await getCurrentQuestionNumber();
 
-  if (!questions || questionNumber > questions.length) {
+  if (!currentQuestionNum || !questions) {
+    throw new Error("No correspondent question in Redis");
+  }
+
+  if (+currentQuestionNum >= questions.length) {
     return null;
   }
 
-  const question: IDBQuestion = questions[questionNumber];
-
+  const question: IDBQuestion = questions[+currentQuestionNum];
   return question;
 }
 
 
-const transformQuestion = (rawQuestion: IDBQuestion): IUserQuestion => {
+const hideCorrectAnswers = (rawQuestion: IDBQuestion): IUserQuestion => {
   const answersArray: Array<String> = [];
-  const {_id, title, answers}: {_id: string, title: string, answers: Array<Answer>}  = rawQuestion;
-  
+  const { _id, title, answers }: { _id: string, title: string, answers: Array<Answer> } = rawQuestion;
+
   for (let i: number = 0; i < answers.length; i++) {
     const element = Object.keys(answers[i]);
     answersArray.push(element[0]);
@@ -115,7 +166,6 @@ const transformQuestion = (rawQuestion: IDBQuestion): IUserQuestion => {
     title: title,
     answers: answersArray,
   }
-
   return transformedQuestion;
 }
 
@@ -147,14 +197,18 @@ const deleteQuestion = async (_id: string): Promise<IDBQuestion | null> => {
 }
 
 
-export = { 
-  getAllQuestions, 
-  getQuestionById, 
-  upsertQuestion, 
-  deleteQuestion, 
+export = {
+  getAllQuestions,
+  getQuestionById,
+  upsertQuestion,
+  deleteQuestion,
   getRandomQuizQuestions,
   getOneQuestionFromRedis,
-  transformQuestion,
-  saveQuizQuestionsToRedis,
-  checkAnswerResult
+  getAllQuestionFromRedis,
+  hideCorrectAnswers,
+  startQuiz,
+  checkAnswerResult,
+  getCurrentQuestionNumber,
+  getCorrectAnswerCount,
+  saveNextQuestionNumberToRedis
 };

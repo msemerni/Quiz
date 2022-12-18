@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import QuestionService from "./question-service";
-import { IDBQuestion, IQuestion, IUserQuestion } from "../../types/project-types";
+import { IDBQuestion, IQuestion, IUserQuestion, AnswerReview } from "../../types/project-types";
 
 
 const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
@@ -16,16 +16,18 @@ const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
 
 const StartQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
-    await QuestionService.saveQuizQuestionsToRedis();
-    const dbFirstQuestion: IDBQuestion | null = await QuestionService.getOneQuestionFromRedis(0);
+    await QuestionService.startQuiz();
+    const currentQuestionNumber: string | null = await QuestionService.getCurrentQuestionNumber();
+    const correctAnswerCount: string | null = await QuestionService.getCorrectAnswerCount();
+    const dbFirstQuestion: IDBQuestion | null = await QuestionService.getOneQuestionFromRedis();
     
-    if (!dbFirstQuestion) {
-      return;
+    if (!dbFirstQuestion || !currentQuestionNumber || !correctAnswerCount) {
+      throw new Error("Questions/quiz state not found");
     }
     
-    const firstQuestion: IUserQuestion = QuestionService.transformQuestion(dbFirstQuestion);
+    const question: IUserQuestion = QuestionService.hideCorrectAnswers(dbFirstQuestion);
 
-    res.status(200).send(firstQuestion);
+    res.status(200).send({question, currentQuestionNumber, correctAnswerCount});
 
   } catch (error: any) {
     res.status(500).send({ error: error.message });
@@ -35,17 +37,24 @@ const StartQuiz = async (req: Request, res: Response): Promise<void> => {
 
 const SendQuestionToUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const questionNumber: number = +req.params.questionNumber;
-    const rawQuestion: IDBQuestion | null = await QuestionService.getOneQuestionFromRedis(questionNumber);
+    const allQuestions: Array<IDBQuestion> | null = await QuestionService.getAllQuestionFromRedis();
+    const rawQuestion: IDBQuestion | null = await QuestionService.getOneQuestionFromRedis();
+    const currentQuestionNumber: string | null = await QuestionService.getCurrentQuestionNumber();
+    const correctAnswerCount: string | null = await QuestionService.getCorrectAnswerCount();
+
+    if (!allQuestions) {
+      throw new Error("Questions not found");
+    }
 
     if (!rawQuestion) {
-      res.status(200).send({ "quiz status": "finish" });
+      const totalQuestions: string = allQuestions.length.toString();
+      res.status(200).send( {totalQuestions, correctAnswerCount} );
       return;
     }
 
-    const userQuestion: IUserQuestion | null = QuestionService.transformQuestion(rawQuestion);
+    const question: IUserQuestion | null = QuestionService.hideCorrectAnswers(rawQuestion!);
 
-    res.status(200).send(userQuestion);
+    res.status(200).send({question, currentQuestionNumber, correctAnswerCount});
 
   } catch (error: any) {
     res.status(500).send({ error: error.message });
@@ -57,7 +66,7 @@ const CheckAnswerResult = async (req: Request, res: Response): Promise<void> => 
   try {
     const questionID: string = req.params.id;
     const userAnswer: string = req.body.userAnswer;
-    const answerReview = await QuestionService.checkAnswerResult(questionID, userAnswer);
+    const answerReview: AnswerReview | null = await QuestionService.checkAnswerResult(questionID, userAnswer);
 
     res.status(200).send(answerReview);
 

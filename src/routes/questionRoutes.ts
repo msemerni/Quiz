@@ -25,7 +25,7 @@ router.delete("/question/:id", protectAccess, DeleteQuestion);
 
 router.get("/quiz", protectAccess, StartQuiz);
 
-router.get("/quiz/question/:questionNumber", protectAccess, SendQuestionToUser);
+router.get("/quiz/question", protectAccess, SendQuestionToUser);
 
 router.post("/quiz/question/:id", protectAccess, CheckAnswerResult);
 

@@ -1,58 +1,57 @@
+
 const renderQuestions = async () => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
   const response = await fetch(`/question`);
   let data = await response.json();
-  console.log(data);
+  console.log("dAtA",data);
 
   if (response.ok === true) {
     data.map(item => renderQuestion(item));
   }
 }
+
 const footer = document.querySelector(".footer");
 const timerBox = document.createElement("h4");
 timerBox.innerText = "0 sec"
 footer.append(timerBox);
 
-let timerId;
-const countQuizTimeSpend = () => {
-  let start = 0;
-  timerBox.innerText = "";
+// let timerId;
+// const countQuizTimeSpend = () => {
+//   let start = 0;
+//   timerBox.innerText = "";
 
-  timerId = setInterval(() => {
-    timerBox.innerText = `${++start} sec`;
-  }, 1000);
-}
+//   timerId = setInterval(() => {
+//     timerBox.innerText = `${++start} sec`;
+//   }, 1000);
+// }
 
 const startQuiz = async () => {
   container.innerHTML = "";
   const response = await fetch(`/quiz`);
 
   // console.log(response);
-  countQuizTimeSpend();
+  // countQuizTimeSpend();
   // удалить:
   let data = await response.json();
-  console.log(data);
+  console.log("data", data);
   if (response.ok === true) {
     // data.map(item => renderQuestion(item));
-    renderQuestion(data);
-
+    renderQuestion(data.question);
+    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
   }
 }
 
-let questionNumber = 0;
-let correctAnswersQuantity = 0;
 let userAnswer;
 let userQuestionID;
 
 const checkAnswer = async () => {
   // console.log("_id: ", _id);
   // console.log("answerValue: ", userAnswer);
-  const UQID = userQuestionID
   // console.log("UCA", userAnswer);
 
 
-  const answerResult = await fetch(`/quiz/question/${UQID}`, {
+  const answerResult = await fetch(`/quiz/question/${userQuestionID}`, {
     method: "POST",
     body: JSON.stringify({
       userAnswer
@@ -63,13 +62,11 @@ const checkAnswer = async () => {
   })
 
   const correctAnswer = await answerResult.json();
-  console.log("_C_A_", correctAnswer);
-  if (correctAnswer && correctAnswer.isCorrectAnswer) {
-    correctAnswersQuantity++;
-  }
-  console.log("correctAnswersQuantity", correctAnswersQuantity);
+  // console.log("_C_A_", correctAnswer);
+  // console.log("data_next", correctAnswer);
 
   console.log("ANSWER_REVIEW: ", correctAnswer);
+
   renderOneQuestion();
 
 }
@@ -79,44 +76,43 @@ const renderOneQuestion = async () => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
 
-  const response = await fetch(`/quiz/question/${questionNumber}`);
+  const response = await fetch(`/quiz/question`);
   
-  // if (!response) {
-  //   console.log("QUIZ FINISH");
-  //   return;
-  // }
-
-  // questionNumber += 1;
- 
-
   let data = await response.json();
-  console.log("DATA", data);
-  if (response.ok === true && data._id) {
-    // // // data.map(item => renderQuestion(item));
-    renderQuestion(data);
 
+  if (response.ok === true && data.question && data.question._id) {
+    renderQuestion(data.question);
+    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
+    console.log("data_next", data);
 
   } else {
-    container.innerHTML = `<h3 class="card-title" style="text-align:center;">Correct: ${correctAnswersQuantity} / ${questionNumber}</h3>`
-    questionNumber = 0;
-    correctAnswersQuantity = 0;
-    userQuestionID = 0;
-    clearInterval(timerId);
+    container.innerHTML = `<h3 class="card-title" style="text-align:center;">FINISH</h3>`
+    // clearInterval(timerId);
+    renderAnswersResult(data.totalQuestions-1, data.correctAnswerCount);
+    console.log("data_next", data);
+
     console.log("END");
   }
+  
 }
 
+renderOneQuestion();
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
+const renderAnswersResult = (currentQuestionNumber, correctAnswerCount ) => {
+  const answersResBox = document.querySelector(".answers-result-box");
+  answersResBox.innerText = `${+correctAnswerCount}/ ${+currentQuestionNumber + 1}`;
+  console.log(currentQuestionNumber);
+  console.log(correctAnswerCount);
+}
 
 
-
-
-const renderQuestion = ({ _id, title, answers }) => {
+let questionNumber = 0;
+const renderQuestion = ({ _id, title, answers } ) => {
   const divContainerText = document.createElement("div");
   const divContainerEdit = document.createElement("div");
   divContainerEdit.className = "d-none ";
@@ -127,9 +123,9 @@ const renderQuestion = ({ _id, title, answers }) => {
   // `
   divContainerText.innerHTML = `
   <div class="card-body d-flex">
-  <h5 class="card-title">${++questionNumber}) ${title}</h5>
+  <h5 class="card-title">${title}</h5>
   `
-
+  
 
   const ul = document.createElement("div");
   ul.className = "card-text d-flex flex-column quest-container";
@@ -140,7 +136,7 @@ const renderQuestion = ({ _id, title, answers }) => {
   ul.addEventListener("click", (event) => {
     if (!event.target.classList.contains('btn-answer')) return;
     userAnswer = event.target.innerText;
-    console.log(userAnswer);
+    // console.log(userAnswer);
     
   }); // КЛИК
   
@@ -363,7 +359,11 @@ const btnNextQuestion = document.createElement("button");
 btnNextQuestion.innerText = "Next";
 btnNextQuestion.className = "btn btn-outline-primary m-2 align-self-center";
 
-document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnStartQuiz, btnNextQuestion);
+const answersResultBox = document.createElement("p");
+answersResultBox.innerText = "Result: ";
+answersResultBox.className = "m-2 align-self-center answers-result-box";
+
+document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnStartQuiz, btnNextQuestion, answersResultBox);
 
 //signup
 const registerNewUser = async () => {

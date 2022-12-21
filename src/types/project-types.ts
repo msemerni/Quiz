@@ -32,5 +32,5 @@ export interface AnswerReview {
     title: string,
     userAnswer: string
     correctAnswer: string
-    isCorrectAnswer: Boolean
+    isCorrectAnswer: boolean
 }

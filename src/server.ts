@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import session from "express-session";
 import { router as userRoutes } from "./routes/userRoutes.js";
 import { router as questionRoutes } from "./routes/questionRoutes.js";
+import { createClient } from "redis";
 require('dotenv').config();
 
 /////////////////////////////////////
@@ -40,9 +41,8 @@ mongoose.connect(dbConnectionUrl, dbOptions);
 const db = mongoose.connection;
 
 db.on("error", console.error.bind(console, "Connection error:"));
-db.once("open", () => console.log("⚡️ Mongo connected"));
+db.once("open", () => console.log("🟢 Mongo connected"));
 
-const { createClient } = require("redis");
 const RedisStore = require("connect-redis")(session);
 
 const redisClient = createClient({
@@ -50,7 +50,7 @@ const redisClient = createClient({
   url: `${REDIS_NAME}://${REDIS_HOST}:${REDIS_PORT}`
 });
 
-redisClient.connect().then(console.log("⚡️ Redis connected"));
+redisClient.connect().then(() => console.log("🟢 Redis connected"));
 
 redisClient.on("error", console.error.bind(console, "Error connection to Redis:"));
 
@@ -64,7 +64,7 @@ app.use(
     saveUninitialized: false,
     secret: SESSION_SECRET!,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24
+      maxAge: 1000 * 60 * 60 * 24,
     }
   }));
 
@@ -81,6 +81,6 @@ app.use(express.static("public"));
 
 app.use(userRoutes, questionRoutes);
 
-app.listen(port, () => console.log(`⚡️ ${APP_NAME} app listening on port ${port}`));
+app.set("redisClient", redisClient);
 
-export { redisClient };
+app.listen(port, () => console.log(`🟢 ${APP_NAME} app listening on port ${port}`));

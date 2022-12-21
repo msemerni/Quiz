@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import QuestionService from "./question-service";
+import RedisService from "./question-redis-service";
 import { IDBQuestion, IQuestion, IUserQuestion, AnswerReview } from "../../types/project-types";
+import { createClient } from "redis";
 
 
 const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
@@ -16,18 +18,19 @@ const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
 
 const StartQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
-    await QuestionService.startQuiz();
-    const currentQuestionNumber: string | null = await QuestionService.getCurrentQuestionNumber();
-    const correctAnswerCount: string | null = await QuestionService.getCorrectAnswerCount();
-    const dbFirstQuestion: IDBQuestion | null = await QuestionService.getOneQuestionFromRedis();
-    
+    const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
+    await QuestionService.startQuiz(redisClient);
+    const currentQuestionNumber: string | null = await RedisService.getCurrentQuestionNumber(redisClient);
+    const correctAnswerCount: string | null = await RedisService.getCorrectAnswerCount(redisClient);
+    const dbFirstQuestion: IDBQuestion | null = await RedisService.getOneQuestion(redisClient);
+
     if (!dbFirstQuestion || !currentQuestionNumber || !correctAnswerCount) {
       throw new Error("Questions/quiz state not found");
     }
-    
+
     const question: IUserQuestion = QuestionService.hideCorrectAnswers(dbFirstQuestion);
 
-    res.status(200).send({question, currentQuestionNumber, correctAnswerCount});
+    res.status(200).send({ question, currentQuestionNumber, correctAnswerCount });
 
   } catch (error: any) {
     res.status(500).send({ error: error.message });
@@ -37,10 +40,11 @@ const StartQuiz = async (req: Request, res: Response): Promise<void> => {
 
 const SendQuestionToUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const allQuestions: Array<IDBQuestion> | null = await QuestionService.getAllQuestionFromRedis();
-    const rawQuestion: IDBQuestion | null = await QuestionService.getOneQuestionFromRedis();
-    const currentQuestionNumber: string | null = await QuestionService.getCurrentQuestionNumber();
-    const correctAnswerCount: string | null = await QuestionService.getCorrectAnswerCount();
+    const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
+    const allQuestions: Array<IDBQuestion> | null = await RedisService.getAllQuestions(redisClient);
+    const rawQuestion: IDBQuestion | null = await RedisService.getOneQuestion(redisClient);
+    const currentQuestionNumber: string | null = await RedisService.getCurrentQuestionNumber(redisClient);
+    const correctAnswerCount: string | null = await RedisService.getCorrectAnswerCount(redisClient);
 
     if (!allQuestions) {
       throw new Error("Questions not found");
@@ -48,13 +52,13 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
 
     if (!rawQuestion) {
       const totalQuestions: string = allQuestions.length.toString();
-      res.status(200).send( {totalQuestions, correctAnswerCount} );
+      res.status(200).send({ totalQuestions, correctAnswerCount });
       return;
     }
 
     const question: IUserQuestion | null = QuestionService.hideCorrectAnswers(rawQuestion!);
 
-    res.status(200).send({question, currentQuestionNumber, correctAnswerCount});
+    res.status(200).send({ question, currentQuestionNumber, correctAnswerCount });
 
   } catch (error: any) {
     res.status(500).send({ error: error.message });
@@ -62,11 +66,12 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
 }
 
 
-const CheckAnswerResult = async (req: Request, res: Response): Promise<void> => {
+const GetAnswerReview = async (req: Request, res: Response): Promise<void> => {
   try {
+    const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
     const questionID: string = req.params.id;
     const userAnswer: string = req.body.userAnswer;
-    const answerReview: AnswerReview | null = await QuestionService.checkAnswerResult(questionID, userAnswer);
+    const answerReview: AnswerReview | null = await QuestionService.createAnswerReview(questionID, userAnswer, redisClient);
 
     res.status(200).send(answerReview);
 
@@ -110,12 +115,12 @@ const DeleteQuestion = async (req: Request, res: Response): Promise<void> => {
 }
 
 
-export { 
-  GetAllQuestions, 
-  GetQuestionById, 
-  UpsertQuestion, 
-  DeleteQuestion, 
-  StartQuiz, 
+export {
+  GetAllQuestions,
+  GetQuestionById,
+  UpsertQuestion,
+  DeleteQuestion,
+  StartQuiz,
   SendQuestionToUser,
-  CheckAnswerResult
+  GetAnswerReview
 };

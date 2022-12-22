@@ -1,5 +1,6 @@
 import { IUser } from "../types/project-types";
 import Joi from "joi";
+require('dotenv').config();
 const { PASSWORD_PATTERN } = process.env;
 
 const validateUserData = (user: IUser): Joi.ValidationResult<IUser> => {

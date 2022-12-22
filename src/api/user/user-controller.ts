@@ -5,11 +5,15 @@ import { IUser } from "../../types/project-types";
 import Joi from "joi";
 import { ObjectId } from "mongodb";
 
+
 const SignUp = async (req: Request, res: Response): Promise<void> => {
   try {
     const user: IUser = req.body;
     const {login, password, nick}: { login: string, password: string, nick?: string} = user;
+    console.log(Joi);
+    
     const isValidNewUser: Joi.ValidationResult<IUser> = validateUserData(user);
+    console.log(isValidNewUser);
 
     if (isValidNewUser.error) {
       res.status(401).send(isValidNewUser);
@@ -33,6 +37,7 @@ const SignUp = async (req: Request, res: Response): Promise<void> => {
     res.status(500).send({error: error.message});
   }
 };
+
 
 const LogIn = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -60,6 +65,7 @@ const LogIn = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
+
 const LogOut = async (req: Request, res: Response): Promise<void> => {
   try {
     req.session.destroy(() => {
@@ -70,6 +76,7 @@ const LogOut = async (req: Request, res: Response): Promise<void> => {
     res.status(500).send({error: error.message});
   }
 }
+
 
 const DeleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -87,4 +94,27 @@ const DeleteUser = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-export { SignUp, LogIn, LogOut, DeleteUser };
+
+const GetAllUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const users: Array<IUser> | null = await UserService.getAllUsers();
+    res.status(200).send(users);
+
+  } catch (error: any) {
+    res.status(500).send({error: error.message});
+  }
+}
+
+const GetUserById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userID: string = req.params.id;
+    const userById: IUser | null = await UserService.getUserById(userID)
+    res.status(200).send(userById);
+    
+  } catch (error: any) {
+    res.status(500).send({ error: error.message });
+  }
+}
+
+
+export { SignUp, LogIn, LogOut, DeleteUser, GetAllUsers, GetUserById };

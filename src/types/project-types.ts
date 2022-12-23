@@ -8,7 +8,7 @@ export interface IUser extends Document {
 
 export interface IQuestion extends Document {
     title: string,
-    answers: Answer
+    answers: IAnswer
 }
 
 export interface IUserQuestion {
@@ -20,14 +20,14 @@ export interface IUserQuestion {
 export interface IDBQuestion {
     _id: string,
     title: string,
-    answers: Array<Answer>
+    answers: Array<IAnswer>
 }
 
-export interface Answer {
+export interface IAnswer {
     [key: string]: Boolean
 }
 
-export interface AnswerReview {
+export interface IAnswerReview {
     _id: string,
     title: string,
     userAnswer: string

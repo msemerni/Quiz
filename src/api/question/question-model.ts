@@ -1,5 +1,5 @@
 import { model, Schema, Model } from "mongoose";
-import { IQuestion, Answer } from "../../types/project-types";
+import { IQuestion } from "../../types/project-types";
 
 const questionSchema: Schema<IQuestion> = new Schema<IQuestion>(
   {

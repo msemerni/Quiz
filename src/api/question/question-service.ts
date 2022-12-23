@@ -1,5 +1,5 @@
 import { Question } from "./question-model";
-import { IQuestion, IUserQuestion, IDBQuestion, Answer, AnswerReview } from "../../types/project-types";
+import { IQuestion, IUserQuestion, IDBQuestion, IAnswer, IAnswerReview } from "../../types/project-types";
 import { createClient } from "redis";
 import RedisService from "./question-redis-service";
 const { QUIZ_QUESTION_QUANTITY } = process.env;
@@ -19,8 +19,8 @@ const startQuiz = async (redisClient: ReturnType<typeof createClient>): Promise<
 }
 
 
-const getCorrectAnswer = (question: IDBQuestion): Answer => {
-  const correctAnswer: Answer | undefined = question.answers.find(answer => Object.values(answer)[0] === true);
+const getCorrectAnswer = (question: IDBQuestion): IAnswer => {
+  const correctAnswer: IAnswer | undefined = question.answers.find(answer => Object.values(answer)[0] === true);
   if (!correctAnswer) {
     throw new Error("No correct answer in question");
   }
@@ -28,7 +28,7 @@ const getCorrectAnswer = (question: IDBQuestion): Answer => {
 }
 
 
-const isAnswerCorrect = (userAnswer: string, correctAnswer: Answer): boolean => {
+const isAnswerCorrect = (userAnswer: string, correctAnswer: IAnswer): boolean => {
   if (!correctAnswer) {
     throw new Error("No correct answer in question");
   }
@@ -39,7 +39,7 @@ const isAnswerCorrect = (userAnswer: string, correctAnswer: Answer): boolean => 
 }
 
 
-const createAnswerReview = async (_id: string, userAnswer: string, redisClient: ReturnType<typeof createClient>): Promise<AnswerReview> => {
+const createAnswerReview = async (_id: string, userAnswer: string, redisClient: ReturnType<typeof createClient>): Promise<IAnswerReview> => {
   if (!userAnswer) {
     userAnswer = "";
   }
@@ -52,12 +52,12 @@ const createAnswerReview = async (_id: string, userAnswer: string, redisClient: 
     throw new Error("No correspondent question in Redis");
   }
 
-  const correctAnswerDB: Answer = getCorrectAnswer(currentQuestion);
+  const correctAnswerDB: IAnswer = getCorrectAnswer(currentQuestion);
   const correctAnswer: string = Object.keys(correctAnswerDB)[0];
   const title = currentQuestion.title;
   const isCorrectAnswer: boolean = isAnswerCorrect(userAnswer, correctAnswerDB);
   isCorrectAnswer && await RedisService.registerAnswerAsCorrect(redisClient);
-  const answerReview: AnswerReview = {_id, title, userAnswer, correctAnswer, isCorrectAnswer};
+  const answerReview: IAnswerReview = {_id, title, userAnswer, correctAnswer, isCorrectAnswer};
   await RedisService.setNextQuestionNumber(redisClient);
 
   return answerReview;
@@ -84,7 +84,7 @@ const getQuestionById = async (_id: string): Promise<IDBQuestion | null> => {
 
 const hideCorrectAnswers = (rawQuestion: IDBQuestion): IUserQuestion => {
   const answersArray: Array<String> = [];
-  const { _id, title, answers }: { _id: string, title: string, answers: Array<Answer> } = rawQuestion;
+  const { _id, title, answers }: { _id: string, title: string, answers: Array<IAnswer> } = rawQuestion;
 
   for (let i: number = 0; i < answers.length; i++) {
     const element = Object.keys(answers[i]);

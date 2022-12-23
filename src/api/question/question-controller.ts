@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import QuestionService from "./question-service";
 import RedisService from "./question-redis-service";
-import { IDBQuestion, IQuestion, IUserQuestion, AnswerReview } from "../../types/project-types";
+import { IDBQuestion, IQuestion, IUserQuestion, IAnswerReview } from "../../types/project-types";
 import { createClient } from "redis";
 
 
@@ -71,7 +71,7 @@ const GetAnswerReview = async (req: Request, res: Response): Promise<void> => {
     const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
     const questionID: string = req.params.id;
     const userAnswer: string = req.body.userAnswer;
-    const answerReview: AnswerReview | null = await QuestionService.createAnswerReview(questionID, userAnswer, redisClient);
+    const answerReview: IAnswerReview | null = await QuestionService.createAnswerReview(questionID, userAnswer, redisClient);
 
     res.status(200).send(answerReview);
 

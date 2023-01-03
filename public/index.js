@@ -1,34 +1,152 @@
+
 const renderQuestions = async () => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
   const response = await fetch(`/question`);
   let data = await response.json();
-  console.log(data);
+  console.log("dAtA",data);
 
   if (response.ok === true) {
     data.map(item => renderQuestion(item));
   }
 }
 
-const renderQuestion = ({ _id, title, answers }) => {
+const footer = document.querySelector(".footer");
+const timerBox = document.createElement("h4");
+timerBox.innerText = "0 sec"
+footer.append(timerBox);
+
+// let timerId;
+// const countQuizTimeSpend = () => {
+//   let start = 0;
+//   timerBox.innerText = "";
+
+//   timerId = setInterval(() => {
+//     timerBox.innerText = `${++start} sec`;
+//   }, 1000);
+// }
+
+const startQuiz = async () => {
+  container.innerHTML = "";
+  const response = await fetch(`/quiz`);
+
+  // console.log(response);
+  // countQuizTimeSpend();
+  // удалить:
+  let data = await response.json();
+  console.log("data", data);
+  if (response.ok === true) {
+    // data.map(item => renderQuestion(item));
+    renderQuestion(data.question);
+    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
+  }
+}
+
+let userAnswer;
+let userQuestionID;
+
+const checkAnswer = async () => {
+  // console.log("_id: ", _id);
+  // console.log("answerValue: ", userAnswer);
+  // console.log("UCA", userAnswer);
+
+
+  const answerResult = await fetch(`/quiz/question/${userQuestionID}`, {
+    method: "POST",
+    body: JSON.stringify({
+      userAnswer
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+
+  const correctAnswer = await answerResult.json();
+  // console.log("_C_A_", correctAnswer);
+  // console.log("data_next", correctAnswer);
+
+  console.log("ANSWER_REVIEW: ", correctAnswer);
+
+  renderOneQuestion();
+
+}
+
+
+const renderOneQuestion = async () => {
+  const container = document.querySelector("#container");
+  container.innerHTML = "";
+
+  const response = await fetch(`/quiz/question`);
+  
+  let data = await response.json();
+
+  if (response.ok === true && data.question && data.question._id) {
+    renderQuestion(data.question);
+    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
+    console.log("data_next", data);
+
+  } else {
+    container.innerHTML = `<h3 class="card-title" style="text-align:center;">FINISH</h3>`
+    // clearInterval(timerId);
+    renderAnswersResult(data.totalQuestions-1, data.correctAnswerCount);
+    console.log("data_next", data);
+
+    console.log("END");
+  }
+  
+}
+
+renderOneQuestion();
+
+const renderAnswersResult = (currentQuestionNumber, correctAnswerCount ) => {
+  const answersResBox = document.querySelector(".answers-result-box");
+  answersResBox.innerText = `${+correctAnswerCount}/ ${+currentQuestionNumber + 1}`;
+  console.log(currentQuestionNumber);
+  console.log(correctAnswerCount);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+
+let questionNumber = 0;
+const renderQuestion = ({ _id, title, answers } ) => {
   const divContainerText = document.createElement("div");
   const divContainerEdit = document.createElement("div");
-  divContainerEdit.className = "d-none";
-
+  divContainerEdit.className = "d-none ";
+  userQuestionID = _id;
+  // divContainerText.innerHTML = `
+  // <div class="card-body d-flex">
+  // <h5 class="card-title">${questionNumber ? `${++questionNumber})` : ""} ${title}</h5>
+  // `
   divContainerText.innerHTML = `
-  <div class="card-body">
+  <div class="card-body d-flex">
   <h5 class="card-title">${title}</h5>
   `
+  
 
-  const ul = document.createElement("ul");
-  ul.className = "card-text";
+  const ul = document.createElement("div");
+  ul.className = "card-text d-flex flex-column quest-container";
   divContainerText.append(ul);
+
+  
+
+  ul.addEventListener("click", (event) => {
+    if (!event.target.classList.contains('btn-answer')) return;
+    userAnswer = event.target.innerText;
+    // console.log(userAnswer);
+    
+  }); // КЛИК
+  
 
   const createAnswersList = (answer) => {
     const list = document.querySelector(".card-text");
-    return `<li class="list__item item">
-        ${JSON.stringify(answer)}
-      </li>`
+    return `<button class="list__item item btn btn-outline-primary m-1 btn-sm btn-answer">
+      ${typeof(answer)==="string"? answer : JSON.stringify(answer)}
+      </button>`
   };
 
   const content = Object.values(answers).reduce((acc, item) => {
@@ -113,57 +231,18 @@ const renderQuestion = ({ _id, title, answers }) => {
   })
 };
 
-//signup
-const registerNewUser = async () => {
-  fetch("/user/signup", {
-    method: "POST",
-    body: JSON.stringify({
-      login: loginInput.value,
-      password: passwordInput.value,
-      nick: nickInput.value,
-    }),
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  })
-    .then((response) => response.json())
-    .then((json) => { console.log(json) });
-};
 
-//login
-const loginUser = async () => {
-  fetch("/user/login", {
-    method: "POST",
-    body: JSON.stringify({
-      login: loginInput.value,
-      password: passwordInput.value,
-    }),
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  })
-    .then((response) => response.json())
-    .then((json) => { console.log(json) });
-};
 
-//logout
-const logoutUser = async () => {
-  fetch(`/user/logout`)
-    .then((response) => response.json())
-    .then((json) => { console.log(json) });
-};
 
-//delete user
-const deleteUser = async (_id) => {
-  fetch(`/user/delete/${_id}`, {
-    method: "DELETE",
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  })
-    .then((response) => response.json())
-    .then((json) => console.log(json));
-}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
 
 const loginForm = document.createElement("form");
 loginForm.classList = 'm-auto px-2 w-100 h-100 text-center bg-light';
@@ -268,10 +347,78 @@ deleteUserBtn.addEventListener("click", function (e) {
 const btnAdd = document.createElement("button");
 btnAdd.innerText = "Create Question";
 btnAdd.className = "btn btn-outline-success m-2 align-self-center";
+
 const btnShowQuestions = document.createElement("button");
 btnShowQuestions.innerText = "Show Questions";
 btnShowQuestions.className = "btn btn-outline-success m-2 align-self-center";
-document.getElementById("create_el").append(btnShowQuestions, btnAdd);
+
+const btnStartQuiz = document.createElement("button");
+btnStartQuiz.innerText = "Start Quiz";
+btnStartQuiz.className = "btn btn-outline-primary m-2 align-self-center";
+
+const btnNextQuestion = document.createElement("button");
+btnNextQuestion.innerText = "Next";
+btnNextQuestion.className = "btn btn-outline-primary m-2 align-self-center";
+
+const answersResultBox = document.createElement("p");
+answersResultBox.innerText = "Result: ";
+answersResultBox.className = "m-2 align-self-center answers-result-box";
+
+document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnStartQuiz, btnNextQuestion, answersResultBox);
+
+//signup
+const registerNewUser = async () => {
+  fetch("/user/signup", {
+    method: "POST",
+    body: JSON.stringify({
+      login: loginInput.value,
+      password: passwordInput.value,
+      nick: nickInput.value,
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => { console.log(json) });
+};
+
+//login
+const loginUser = async () => {
+  fetch("/user/login", {
+    method: "POST",
+    body: JSON.stringify({
+      login: loginInput.value,
+      password: passwordInput.value,
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => { console.log(json) });
+};
+
+//logout
+const logoutUser = async () => {
+  fetch(`/user/logout`)
+    .then((response) => response.json())
+    .then((json) => { console.log(json) });
+};
+
+//delete user
+const deleteUser = async (_id) => {
+  fetch(`/user/delete/${_id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+    .then((response) => response.json())
+    .then((json) => console.log(json));
+}
+
+
 
 const openNewQuestionField = () => {
   const div = document.createElement("div");
@@ -312,3 +459,5 @@ const openNewQuestionField = () => {
 
 btnAdd.addEventListener("click", openNewQuestionField);
 btnShowQuestions.addEventListener("click", renderQuestions);
+btnStartQuiz.addEventListener("click", startQuiz);
+btnNextQuestion.addEventListener("click", checkAnswer);

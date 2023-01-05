@@ -2,15 +2,16 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import bodyParser from "body-parser";
 import session from "express-session";
 import { router as userRoutes } from "./routes/userRoutes.js";
+import { router as gameRoutes } from "./routes/gameRoutes.js";
 import { router as questionRoutes } from "./routes/questionRoutes.js";
 import { createClient } from "redis";
 require('dotenv').config();
 
 /////////////////////////////////////
 //// Login:
-//// q@com.ua
+//// w@com.ua
 //// Password:
-//// qqq
+//// www
 /////////////////////////////////////
 
 const {
@@ -43,7 +44,7 @@ const db = mongoose.connection;
 db.on("error", console.error.bind(console, "Connection error:"));
 db.once("open", () => console.log("🟢 Mongo connected"));
 
-const RedisStore = require("connect-redis")(session);
+const RedisGameStore = require("connect-redis")(session);
 
 const redisClient = createClient({
   legacyMode: true,
@@ -54,11 +55,14 @@ redisClient.connect().then(() => console.log("🟢 Redis connected"));
 
 redisClient.on("error", console.error.bind(console, "Error connection to Redis:"));
 
-const app: Express = express();
+const app = require('express')();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+require('./socketIO')(io);
 
 app.use(
   session({
-    store: new RedisStore({ client: redisClient }),
+    store: new RedisGameStore({ client: redisClient }),
     resave: false,
     rolling: true,
     saveUninitialized: false,
@@ -76,11 +80,10 @@ app.use(function (req: Request, res: Response, next: NextFunction) {
 })
 
 app.use(bodyParser.json());
-
 app.use(express.static("public"));
-
-app.use(userRoutes, questionRoutes);
-
+app.use(userRoutes, questionRoutes, gameRoutes);
 app.set("redisClient", redisClient);
+app.set("io", io);
 
-app.listen(port, () => console.log(`🟢 ${APP_NAME} app listening on port ${port}`));
+
+http.listen(port, () => console.log(`🟢 ${APP_NAME} app listening on port ${port}`));

@@ -1,11 +1,13 @@
 import bcrypt from "bcryptjs";
 import { User } from "./user-model";
 import { IUser } from "../../types/project-types";
+import { ObjectId } from "mongodb";
 
 const createUser = async ({ login, password, nick }: 
                           { login: string, password: string, nick: string }): Promise<IUser> => {
   const passwordHash: string = await bcrypt.hash(password, 10);
   const newUser: IUser = await User.create({ login, password: passwordHash, nick });
+  
   await newUser.save();
   return newUser;
 }
@@ -41,11 +43,11 @@ const getAllUsers = async (): Promise<Array<IUser> | null> => {
   return allQuestions;
 }
 
-const getUserById = async (_id: string): Promise<IUser | null> => {
+
+const getUserById = async (_id: ObjectId): Promise<IUser | null> => {
   const user: IUser | null = await User.findOne({ _id }, {password: false});
-  console.log(user);
-  
   return user;
 }
+
 
 export = { createUser, findUser, isCorrectPassword, deleteUser, getAllUsers, getUserById };

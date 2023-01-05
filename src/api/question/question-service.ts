@@ -4,12 +4,10 @@ import { createClient } from "redis";
 import RedisService from "./question-redis-service";
 const { QUIZ_QUESTION_QUANTITY } = process.env;
 
-
 const getAllQuestions = async (): Promise<Array<IDBQuestion> | null> => {
   const allQuestions: Array<IDBQuestion> | null = await Question.find();
   return allQuestions;
 }
-
 
 const startQuiz = async (redisClient: ReturnType<typeof createClient>): Promise<void> => {
   const quizQuestions: Array<IDBQuestion> | null = await getRandomQuizQuestions(+QUIZ_QUESTION_QUANTITY!);
@@ -18,7 +16,6 @@ const startQuiz = async (redisClient: ReturnType<typeof createClient>): Promise<
   await RedisService.resetCorrectAnswersCount(redisClient);
 }
 
-
 const getCorrectAnswer = (question: IDBQuestion): IAnswer => {
   const correctAnswer: IAnswer | undefined = question.answers.find(answer => Object.values(answer)[0] === true);
   if (!correctAnswer) {
@@ -26,7 +23,6 @@ const getCorrectAnswer = (question: IDBQuestion): IAnswer => {
   }
   return correctAnswer;
 }
-
 
 const isAnswerCorrect = (userAnswer: string, correctAnswer: IAnswer): boolean => {
   if (!correctAnswer) {
@@ -37,7 +33,6 @@ const isAnswerCorrect = (userAnswer: string, correctAnswer: IAnswer): boolean =>
   }
   return false;
 }
-
 
 const createAnswerReview = async (_id: string, userAnswer: string, redisClient: ReturnType<typeof createClient>): Promise<IAnswerReview> => {
   if (!userAnswer) {
@@ -63,7 +58,6 @@ const createAnswerReview = async (_id: string, userAnswer: string, redisClient: 
   return answerReview;
 }
 
-
 const getRandomQuizQuestions = async (questionQuantity: number): Promise<Array<IDBQuestion> | null> => {
   if (!questionQuantity) {
     questionQuantity = 1;
@@ -75,12 +69,10 @@ const getRandomQuizQuestions = async (questionQuantity: number): Promise<Array<I
   return questions;
 }
 
-
 const getQuestionById = async (_id: string): Promise<IDBQuestion | null> => {
   const question: IDBQuestion | null = await Question.findOne({ _id });
   return question;
 }
-
 
 const hideCorrectAnswers = (rawQuestion: IDBQuestion): IUserQuestion => {
   const answersArray: Array<String> = [];
@@ -98,7 +90,6 @@ const hideCorrectAnswers = (rawQuestion: IDBQuestion): IUserQuestion => {
   }
   return transformedQuestion;
 }
-
 
 const upsertQuestion = async (upsertQuestion: IQuestion): Promise<IQuestion | null> => {
   const question: IQuestion | null = await Question.findOne({ _id: upsertQuestion._id });
@@ -120,14 +111,12 @@ const upsertQuestion = async (upsertQuestion: IQuestion): Promise<IQuestion | nu
   }
 }
 
-
 const deleteQuestion = async (_id: string): Promise<IDBQuestion | null> => {
   const deletedQuestion: IDBQuestion | null = await Question.findByIdAndDelete({ _id })
   return deletedQuestion;
 }
 
-
-export = {
+export {
   getAllQuestions,
   getQuestionById,
   upsertQuestion,

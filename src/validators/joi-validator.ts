@@ -8,8 +8,7 @@ const validateUserData = (user: IUser): Joi.ValidationResult<IUser> => {
     
     login: Joi
       .string()
-      .required()
-      .email(),
+      .required(),
   
     password: Joi
       .string()

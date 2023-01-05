@@ -6,7 +6,7 @@ import {
     DeleteQuestion, 
     StartQuiz, 
     SendQuestionToUser,
-    GetAnswerReview
+    GetAnswerReview,
 } from "../api/question/question-controller";
 
 const protectAccess = require("../middleware/auth.js");
@@ -25,7 +25,7 @@ router.delete("/question/:id", protectAccess, DeleteQuestion);
 
 router.get("/quiz", protectAccess, StartQuiz);
 
-router.get("/quiz/question", protectAccess, SendQuestionToUser);
+router.get("/quiz/:id", protectAccess, SendQuestionToUser);
 
 router.post("/quiz/question/:id", protectAccess, GetAnswerReview);
 

@@ -108,7 +108,7 @@ const GetAllUsers = async (req: Request, res: Response): Promise<void> => {
 const GetUserById = async (req: Request, res: Response): Promise<void> => {
   try {
     const userID: string = req.params.id;
-    const userById: IUser | null = await UserService.getUserById(userID)
+    const userById: IUser | null = await UserService.getUserById(userID as unknown as ObjectId)
     res.status(200).send(userById);
     
   } catch (error: any) {

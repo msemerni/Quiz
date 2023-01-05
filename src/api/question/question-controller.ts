@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import QuestionService from "./question-service";
+import * as QuestionService from "./question-service";
 import RedisService from "./question-redis-service";
 import { IDBQuestion, IQuestion, IUserQuestion, IAnswerReview } from "../../types/project-types";
 import { createClient } from "redis";
@@ -14,7 +14,6 @@ const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
     res.status(500).send({ error: error.message });
   }
 }
-
 
 const StartQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -36,7 +35,6 @@ const StartQuiz = async (req: Request, res: Response): Promise<void> => {
     res.status(500).send({ error: error.message });
   }
 }
-
 
 const SendQuestionToUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -65,7 +63,6 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
   }
 }
 
-
 const GetAnswerReview = async (req: Request, res: Response): Promise<void> => {
   try {
     const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
@@ -80,7 +77,6 @@ const GetAnswerReview = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-
 const GetQuestionById = async (req: Request, res: Response): Promise<void> => {
   try {
     const questionID: string = req.params.id;
@@ -92,7 +88,6 @@ const GetQuestionById = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-
 const UpsertQuestion = async (req: Request, res: Response): Promise<void> => {
   try {
     const question: IQuestion | null = await QuestionService.upsertQuestion(req.body);
@@ -103,7 +98,6 @@ const UpsertQuestion = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-
 const DeleteQuestion = async (req: Request, res: Response): Promise<void> => {
   try {
     const deletedQuestion: IDBQuestion | null = await QuestionService.deleteQuestion(req.params.id)
@@ -113,7 +107,6 @@ const DeleteQuestion = async (req: Request, res: Response): Promise<void> => {
     res.status(500).send({ error: error.message });
   }
 }
-
 
 export {
   GetAllQuestions,

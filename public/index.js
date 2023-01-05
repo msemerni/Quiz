@@ -3,6 +3,7 @@ const renderQuestions = async () => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
   const response = await fetch(`/question`);
+  console.log(response);
   let data = await response.json();
   console.log("dAtA",data);
 
@@ -251,10 +252,8 @@ const loginDiv = document.createElement("div");
 loginDiv.className = "m-1";
 const loginLabel = document.createElement("label");
 loginLabel.classList = "form-label";
-loginLabel.innerText = "Email:";
+loginLabel.innerText = "Login:";
 const loginInput = document.createElement("input");
-loginInput.type = "email";
-loginInput.placeholder = "* valid email";
 // loginInput.setAttribute('required', 'required'); 
 loginInput.classList = "form-control";
 loginLabel.append(loginInput);
@@ -461,3 +460,76 @@ btnAdd.addEventListener("click", openNewQuestionField);
 btnShowQuestions.addEventListener("click", renderQuestions);
 btnStartQuiz.addEventListener("click", startQuiz);
 btnNextQuestion.addEventListener("click", checkAnswer);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+const gameName = "quiz";
+
+const $usersBox = document.querySelector(".users-box");
+const $events = document.getElementById('events');
+
+const socket = io();
+
+const newItem = (content) => {
+  const item = document.createElement('li');
+  item.innerText = content;
+  return item;
+}
+
+const renderUsers = (users) => {
+  $usersBox.innerText = "";
+  users.map(user => renderUser(user));
+}
+
+const renderUser = (user) => {
+  const userBtn = document.createElement("button");
+  userBtn.classList = "btn btn-outline-secondary m-1";
+  userBtn.innerText = `${user._id} - ${user.login}`;
+  $usersBox.append(userBtn);
+
+  userBtn.addEventListener("click", async (e) => {
+    const data = await fetch(`/game/new/${gameName}/${user._id}`);
+    const json = await data.json();
+    const gameLink = json.gameLink;
+
+    socket.emit('create game', gameLink);
+
+    $events.append(newItem(`${gameLink}`));
+
+    console.log("GAME_LINK: ", gameLink);
+  });
+}
+
+const getAllUsers = async () => {
+  const response = await fetch(`/users`);
+  let users = await response.json();
+  // console.log("USERS", users);
+  if (response.ok === true) {
+    renderUsers(users);
+  }
+}
+
+
+const btnShowUsers = document.createElement("button");
+btnShowUsers.innerText = "Show Users";
+btnShowUsers.classList = "btn btn-outline-success my-2";
+btnShowUsers.addEventListener("click", getAllUsers);
+
+document.getElementById("create_el").append(btnShowUsers);
+
+getAllUsers();
+
+
+//// Socket connection:
+socket.on('connect', () => {
+  $events.append(newItem(`Connected to socket: ${socket.id}`));
+});
+
+socket.on('game created', (userName, gameUUID) => {
+  $events.append(newItem(`${userName} created game : ${gameUUID}`));
+});
+
+socket.on('user connected', (userName, gameName, gameUUID) => {
+  $events.append(newItem(`${userName} connected to game : ${gameUUID}`));
+  window.location.href = `http://localhost:8000/${gameName}/${gameUUID}`;
+});

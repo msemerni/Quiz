@@ -4,4 +4,4 @@ tempfolder
 dist
 # .credentials_draft
 # .env
-/src/sqs/.credentials_draft_
+# /src/sqs/.credentials_draft_

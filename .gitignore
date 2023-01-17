@@ -1,7 +1,7 @@
 node_modules
 tempfolder
-questions.txt
 .gitignore
 dist
 # .credentials_draft
 # .env
+.src/sqs/.credentials_draft

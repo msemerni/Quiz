@@ -3,5 +3,5 @@ tempfolder
 questions.txt
 .gitignore
 dist
-.credentials_draft
+# .credentials_draft
 # .env

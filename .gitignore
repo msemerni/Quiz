@@ -3,4 +3,5 @@ tempfolder
 questions.txt
 .gitignore
 dist
+src/sqs/.credentials_draft
 # .env

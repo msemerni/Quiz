@@ -3,7 +3,8 @@ import * as QuestionService from "./question-service";
 import RedisService from "./question-redis-service";
 import { IDBQuestion, IQuestion, IUserQuestion, IAnswerReview } from "../../types/project-types";
 import { createClient } from "redis";
-
+import * as SQSService from "../../sqs/sqs-sendmessage-service";
+import { IDBUser } from "../../types/project-types";
 
 const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -43,7 +44,9 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
     const rawQuestion: IDBQuestion | null = await RedisService.getOneQuestion(redisClient);
     const currentQuestionNumber: string | null = await RedisService.getCurrentQuestionNumber(redisClient);
     const correctAnswerCount: string | null = await RedisService.getCorrectAnswerCount(redisClient);
-
+    const  { _id, login, nick } = req.session.user;
+    const user: IDBUser = {_id, login, nick} as IDBUser;
+    
     if (!allQuestions) {
       throw new Error("Questions not found");
     }
@@ -51,6 +54,12 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
     if (!rawQuestion) {
       const totalQuestions: string = allQuestions.length.toString();
       res.status(200).send({ totalQuestions, correctAnswerCount });
+
+      const answerReviewSQS: string | null = await RedisService.getAnswerReview(redisClient);
+      if (!answerReviewSQS) {
+        throw new Error("Answer review not found");
+      }
+      SQSService.sendDataToAWSQueue(user, answerReviewSQS);
       return;
     }
 

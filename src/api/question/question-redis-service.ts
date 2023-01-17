@@ -14,6 +14,7 @@ import { IDBQuestion } from "../../types/project-types";
 
 const setQuizQuestions = async (quizQuestions: string, redisClient: ReturnType<typeof createClient>): Promise<void> => {
   await redisClient.set("quizQuestions", quizQuestions);
+  await redisClient.set("answerReview", "[]");
 }
 
 
@@ -61,6 +62,10 @@ const getOneQuestion = async (redisClient: ReturnType<typeof createClient>): Pro
   return question;
 }
 
+const getAnswerReview = async (redisClient: ReturnType<typeof createClient>): Promise<string | null> => {
+  const answersReview: string = await promisify(redisClient.get).bind(redisClient)("answerReview");
+  return answersReview;
+}
 
 const getCurrentQuestionNumber = async (redisClient: ReturnType<typeof createClient>): Promise<string | null> => {
   const questionNumber: string = await promisify(redisClient.get).bind(redisClient)("currentQuestionNumber");
@@ -93,6 +98,14 @@ const registerAnswerAsCorrect = async (redisClient: ReturnType<typeof createClie
   await incrementCorrectAnswersCount(+correctAnswerCount, redisClient);
 }
 
+const setAnswerReview = async (answerReview: any, redisClient: ReturnType<typeof createClient>): Promise<void> => {
+  const reviews: string = await promisify(redisClient.get).bind(redisClient)("answerReview");
+  const reviewArray = JSON.parse(reviews);
+  const answerObj = JSON.parse(answerReview);
+  reviewArray.push(answerObj);
+  const reviewArrayString = JSON.stringify(reviewArray);
+  await redisClient.set("answerReview", reviewArrayString);
+}
 
 export = { 
   getAllQuestions,
@@ -103,5 +116,7 @@ export = {
   setNextQuestionNumber,
   registerAnswerAsCorrect,
   resetCurrentQuestionNumber,
-  resetCorrectAnswersCount
+  resetCorrectAnswersCount,
+  setAnswerReview,
+  getAnswerReview
  }

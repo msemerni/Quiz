@@ -54,6 +54,7 @@ const createAnswerReview = async (_id: string, userAnswer: string, redisClient: 
   isCorrectAnswer && await RedisService.registerAnswerAsCorrect(redisClient);
   const answerReview: IAnswerReview = {_id, title, userAnswer, correctAnswer, isCorrectAnswer};
   await RedisService.setNextQuestionNumber(redisClient);
+  await RedisService.setAnswerReview(JSON.stringify(answerReview), redisClient);
 
   return answerReview;
 }

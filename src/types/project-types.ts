@@ -2,51 +2,72 @@ import { Document } from "mongoose";
 import { ObjectId } from "mongodb";
 
 export interface IUser extends Document {
-    _id: ObjectId,
-    login: string,
-    password: string,
-    nick?: string,
+  _id: ObjectId,
+  login: string,
+  password: string,
+  nick?: string,
 }
 
 export interface IDBUser extends Document {
-    _id: ObjectId,
-    login: string,
-    nick?: string,
+  _id: ObjectId,
+  login: string,
+  nick?: string,
 }
 
 export interface IQuestion extends Document {
-    title: string,
-    answers: IAnswer
+  title: string,
+  answers: IAnswer
 }
 
 export interface IUserQuestion {
-    _id: string,
-    title: string,
-    answers: Array<String>
+  _id: string,
+  title: string,
+  answers: Array<String>
 }
 
 export interface IDBQuestion {
-    _id: string,
-    title: string,
-    answers: Array<IAnswer>
+  _id: string,
+  title: string,
+  answers: Array<IAnswer>
 }
 
 export interface IAnswer {
-    [key: string]: Boolean
+  [key: string]: Boolean
 }
 
 export interface IAnswerReview {
-    _id: string,
-    title: string,
-    userAnswer: string
-    correctAnswer: string
-    isCorrectAnswer: boolean
+  _id: string,
+  title: string,
+  userAnswer: string
+  correctAnswer: string
+  isCorrectAnswer: boolean
 }
 
 export interface IGameLinkObject {
-    gameUUID: string,
-    gameName: string,
-    initiatorUser: IDBUser,
-    opponentUser: IDBUser,
-    linkCreationTime: number
+  gameUUID: string,
+  gameName: string,
+  initiatorUser: IDBUser,
+  opponentUser: IDBUser,
+  linkCreationTime: number
+}
+
+export interface IGameLinkObject {
+  gameUUID: string,
+  gameName: string,
+  initiatorUser: IDBUser,
+  opponentUser: IDBUser,
+  linkCreationTime: number
+}
+
+export interface IStatisticsArr {
+  readonly id: string;
+  readonly title: string;
+  readonly userAnswer: string;
+  readonly correctAnswer: string;
+  readonly isCorrectAnswer: boolean;
+}
+
+export interface IStatistics {
+  readonly user: IDBUser;
+  readonly answers: IStatisticsArr;
 }

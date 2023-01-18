@@ -1,12 +1,17 @@
 import AWS from 'aws-sdk';
 import { IDBUser, IStatistics, IStatisticsArr } from "../types/project-types";
 
+const { AWS_REGION, STATISTICS_QUEUE_URL, API_VERSION } = process.env;
+
 // const credentials = new AWS.SharedIniFileCredentials({profile: 'work-account'});
 // AWS.config.credentials = credentials;
-AWS.config.update({ region: "eu-central-1" });
-const queueAWSUrl = "https://sqs.eu-central-1.amazonaws.com/090794209652/StatisticsQueue";
+AWS.config.update({ region: AWS_REGION });
 
-const sqs = new AWS.SQS({ apiVersion: "2012-11-05" });
+if (!STATISTICS_QUEUE_URL) {
+  throw new Error("No SQS QUEUE_URL");
+};
+
+const sqs = new AWS.SQS({ apiVersion: API_VERSION });
 
 const sendDataToAWSQueue = (user: IDBUser, messageBody: string): void => {
   const answers: IStatisticsArr = JSON.parse(messageBody);
@@ -16,9 +21,9 @@ const sendDataToAWSQueue = (user: IDBUser, messageBody: string): void => {
   const params = {
     DelaySeconds: 10,
     MessageBody: message,
-    QueueUrl: queueAWSUrl
+    QueueUrl: STATISTICS_QUEUE_URL
   };
-
+  
   sqs.sendMessage(params, (err, data) => {
     if (err) {
       console.log("Error", err);

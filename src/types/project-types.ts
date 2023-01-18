@@ -6,34 +6,34 @@ export interface IUser extends Document {
   login: string,
   password: string,
   nick?: string,
-}
+};
 
 export interface IDBUser extends Document {
   _id: ObjectId,
   login: string,
   nick?: string,
-}
+};
 
 export interface IQuestion extends Document {
   title: string,
   answers: IAnswer
-}
+};
 
 export interface IUserQuestion {
   _id: string,
   title: string,
   answers: Array<String>
-}
+};
 
 export interface IDBQuestion {
   _id: string,
   title: string,
   answers: Array<IAnswer>
-}
+};
 
 export interface IAnswer {
   [key: string]: Boolean
-}
+};
 
 export interface IAnswerReview {
   _id: string,
@@ -41,7 +41,7 @@ export interface IAnswerReview {
   userAnswer: string
   correctAnswer: string
   isCorrectAnswer: boolean
-}
+};
 
 export interface IGameLinkObject {
   gameUUID: string,
@@ -49,7 +49,7 @@ export interface IGameLinkObject {
   initiatorUser: IDBUser,
   opponentUser: IDBUser,
   linkCreationTime: number
-}
+};
 
 export interface IGameLinkObject {
   gameUUID: string,
@@ -57,7 +57,7 @@ export interface IGameLinkObject {
   initiatorUser: IDBUser,
   opponentUser: IDBUser,
   linkCreationTime: number
-}
+};
 
 export interface IStatisticsArr {
   readonly id: string;
@@ -65,9 +65,9 @@ export interface IStatisticsArr {
   readonly userAnswer: string;
   readonly correctAnswer: string;
   readonly isCorrectAnswer: boolean;
-}
+};
 
 export interface IStatistics {
   readonly user: IDBUser;
   readonly answers: IStatisticsArr;
-}
+};

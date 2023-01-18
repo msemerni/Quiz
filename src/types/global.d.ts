@@ -1,6 +1,6 @@
 
 import "express-session";
-import { Request } from "express"
+import { Request } from "express";
 import { IUser } from "../types/project-types";
 
 declare module 'express-session' {

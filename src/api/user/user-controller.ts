@@ -5,7 +5,6 @@ import { IUser } from "../../types/project-types";
 import Joi from "joi";
 import { ObjectId } from "mongodb";
 
-
 const SignUp = async (req: Request, res: Response): Promise<void> => {
   try {
     const user: IUser = req.body;

@@ -7,13 +7,6 @@ import { router as questionRoutes } from "./routes/questionRoutes.js";
 import { createClient } from "redis";
 require('dotenv').config();
 
-/////////////////////////////////////
-//// Login:
-//// w@com.ua
-//// Password:
-//// www
-/////////////////////////////////////
-
 const {
   APP_NAME,
   PORT,

@@ -3,4 +3,4 @@ tempfolder
 .gitignore
 dist
 src/sqs/.credentials_draft_
-# .env
+.env

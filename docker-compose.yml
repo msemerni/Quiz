@@ -4,15 +4,12 @@ services:
   node:
     build: .
     ports:
-      - 8000:8000
+      - 3000:3000
     volumes:
       - ./:/code
     env_file: .env
-    environment:
-        - SESSION_SECRET=$SESSION_SECRET
     depends_on:
       - mongo
-      - redis
 
   mongo:
     image: mongo
@@ -20,9 +17,6 @@ services:
       - 27018:27017
     volumes:
       - mongodb:/data/db
-
-  redis:
-    image: redis
 
 volumes:
  mongodb:

@@ -3,7 +3,7 @@ import * as QuestionService from "./question-service";
 import RedisService from "./question-redis-service";
 import { IDBQuestion, IQuestion, IUserQuestion, IAnswerReview } from "../../types/project-types";
 import { createClient } from "redis";
-import * as SQSService from "../../sqs/sqs-sendmessage-service";
+import * as SQSService from "../../sqs/sqs-send-msg-service";
 import { IDBUser } from "../../types/project-types";
 
 const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {

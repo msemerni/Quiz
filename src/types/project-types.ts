@@ -1,6 +1,12 @@
 import { Document } from "mongoose";
 import { ObjectId } from "mongodb";
 
+export enum GameStatus { 
+  created="created", 
+  process="process", 
+  finished="finished"
+};
+
 export interface IUser extends Document {
   _id: ObjectId,
   login: string,
@@ -43,20 +49,27 @@ export interface IAnswerReview {
   isCorrectAnswer: boolean
 };
 
-export interface IGameLinkObject {
-  gameUUID: string,
-  gameName: string,
-  initiatorUser: IDBUser,
-  opponentUser: IDBUser,
-  linkCreationTime: number
+export interface IUserStatistics {
+  user: IDBUser,
+  correctAnswers: number,
+  totalResponseTime: number
+};
+
+export interface IGameStatistics {
+  totalQuestionsCount: number,
+  initiator: IUserStatistics,
+  opponent: IUserStatistics
 };
 
 export interface IGameLinkObject {
   gameUUID: string,
   gameName: string,
-  initiatorUser: IDBUser,
-  opponentUser: IDBUser,
-  linkCreationTime: number
+  initiator: IUserStatistics,
+  opponent: IUserStatistics,
+  linkCreationTime: number,
+  quizQuestions: Array<IDBQuestion>,
+  currentQuestionNumber: number,
+  gameStatus: GameStatus
 };
 
 export interface IStatisticsArr {
@@ -71,3 +84,14 @@ export interface IStatistics {
   readonly user: IDBUser;
   readonly answers: IStatisticsArr;
 };
+
+export interface IGameLinkData {
+  readonly gameLink: string;
+  readonly initiatorUserLogin: string;
+};
+
+export interface IError {
+  readonly status: string;
+  readonly message: string;
+};
+

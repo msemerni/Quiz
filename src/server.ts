@@ -1,10 +1,17 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import bodyParser from "body-parser";
 import session from "express-session";
+import { createServer } from "http";
+import { Server, Socket } from "socket.io";
 import { router as userRoutes } from "./routes/userRoutes.js";
 import { router as gameRoutes } from "./routes/gameRoutes.js";
 import { router as questionRoutes } from "./routes/questionRoutes.js";
 import { createClient } from "redis";
+
+const app = require('express')();
+const http = createServer(app);
+const io = new Server(http, {}); 
+require('./socketIO')(io);
 require('dotenv').config();
 
 const {
@@ -48,11 +55,6 @@ redisClient.connect().then(() => console.log("🟢 Redis connected"));
 
 redisClient.on("error", console.error.bind(console, "Error connection to Redis:"));
 
-const app = require('express')();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
-require('./socketIO')(io);
-
 app.use(
   session({
     store: new RedisGameStore({ client: redisClient }),
@@ -77,6 +79,5 @@ app.use(express.static("public"));
 app.use(userRoutes, questionRoutes, gameRoutes);
 app.set("redisClient", redisClient);
 app.set("io", io);
-
 
 http.listen(port, () => console.log(`🟢 ${APP_NAME} app listening on port ${port}`));

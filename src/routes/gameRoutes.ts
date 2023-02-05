@@ -1,10 +1,16 @@
 import { Router } from "express";
-import { JoinGame, GenerateGameLink } from "../api/game/game-controller";
+import { JoinGame, CreateQuiz, SendQuestionToUser, GetAnswerReview } from "../api/game/game-controller";
 const protectAccess = require("../middleware/auth.js");
+const gamePermission = require("../middleware/game-permission.js");
 const router: Router = Router();
 
-router.get("/game/:token", protectAccess, JoinGame);
+router.get("/game/new/:gamename/:userid", protectAccess, CreateQuiz);
 
-router.get("/game/new/:gamename/:id", protectAccess, GenerateGameLink);
+router.get("/game/:gameuuid", protectAccess, gamePermission, JoinGame);
+
+router.get("/quiz/:gameuuid", protectAccess, gamePermission, SendQuestionToUser);
+
+router.post("/quiz/:gameuuid/:questionid", protectAccess, gamePermission, GetAnswerReview);
+
 
 export { router };

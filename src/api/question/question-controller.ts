@@ -1,85 +1,11 @@
 import { Request, Response } from "express";
 import * as QuestionService from "./question-service";
-import RedisService from "./question-redis-service";
-import { IDBQuestion, IQuestion, IUserQuestion, IAnswerReview } from "../../types/project-types";
-import { createClient } from "redis";
-import * as SQSService from "../../sqs/sqs-send-msg-service";
-import { IDBUser } from "../../types/project-types";
+import { IDBQuestion, IQuestion } from "../../types/project-types";
 
 const GetAllQuestions = async (req: Request, res: Response): Promise<void> => {
   try {
     const allQuestions: Array<IDBQuestion> | null = await QuestionService.getAllQuestions();
     res.status(200).send(allQuestions);
-
-  } catch (error: any) {
-    res.status(500).send({ error: error.message });
-  }
-}
-
-const StartQuiz = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
-    await QuestionService.startQuiz(redisClient);
-    const currentQuestionNumber: string | null = await RedisService.getCurrentQuestionNumber(redisClient);
-    const correctAnswerCount: string | null = await RedisService.getCorrectAnswerCount(redisClient);
-    const dbFirstQuestion: IDBQuestion | null = await RedisService.getOneQuestion(redisClient);
-
-    if (!dbFirstQuestion || !currentQuestionNumber || !correctAnswerCount) {
-      throw new Error("Questions/quiz state not found");
-    }
-
-    const question: IUserQuestion = QuestionService.hideCorrectAnswers(dbFirstQuestion);
-
-    res.status(200).send({ question, currentQuestionNumber, correctAnswerCount });
-
-  } catch (error: any) {
-    res.status(500).send({ error: error.message });
-  }
-}
-
-const SendQuestionToUser = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
-    const allQuestions: Array<IDBQuestion> | null = await RedisService.getAllQuestions(redisClient);
-    const rawQuestion: IDBQuestion | null = await RedisService.getOneQuestion(redisClient);
-    const currentQuestionNumber: string | null = await RedisService.getCurrentQuestionNumber(redisClient);
-    const correctAnswerCount: string | null = await RedisService.getCorrectAnswerCount(redisClient);
-    const  { _id, login, nick } = req.session.user;
-    const user: IDBUser = {_id, login, nick} as IDBUser;
-    
-    if (!allQuestions) {
-      throw new Error("Questions not found");
-    }
-
-    if (!rawQuestion) {
-      const totalQuestions: string = allQuestions.length.toString();
-      res.status(200).send({ totalQuestions, correctAnswerCount });
-
-      const answerReviewSQS: string | null = await RedisService.getAnswerReview(redisClient);
-      if (!answerReviewSQS) {
-        throw new Error("Answer review not found");
-      }
-      SQSService.sendDataToAWSQueue(user, answerReviewSQS);
-      return;
-    }
-
-    const question: IUserQuestion | null = QuestionService.hideCorrectAnswers(rawQuestion!);
-
-    res.status(200).send({ question, currentQuestionNumber, correctAnswerCount });
-
-  } catch (error: any) {
-    res.status(500).send({ error: error.message });
-  }
-}
-
-const GetAnswerReview = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
-    const questionID: string = req.params.id;
-    const userAnswer: string = req.body.userAnswer;
-    const answerReview: IAnswerReview | null = await QuestionService.createAnswerReview(questionID, userAnswer, redisClient);
-
-    res.status(200).send(answerReview);
 
   } catch (error: any) {
     res.status(500).send({ error: error.message });
@@ -122,7 +48,4 @@ export {
   GetQuestionById,
   UpsertQuestion,
   DeleteQuestion,
-  StartQuiz,
-  SendQuestionToUser,
-  GetAnswerReview
 };

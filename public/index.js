@@ -27,48 +27,49 @@ footer.append(timerBox);
 //   }, 1000);
 // }
 
-const startQuiz = async () => {
-  container.innerHTML = "";
-  const response = await fetch(`/quiz`);
+// const createQuiz = async () => {
+//   container.innerHTML = "";
+//   const response = await fetch(`/quiz`);
 
-  // console.log(response);
-  // countQuizTimeSpend();
-  // удалить:
-  let data = await response.json();
-  console.log("data", data);
-  if (response.ok === true) {
-    // data.map(item => renderQuestion(item));
-    renderQuestion(data.question);
-    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
-  }
-}
+//   // console.log(response);
+//   // countQuizTimeSpend();
+//   // удалить:
+//   let data = await response.json();
+//   console.log("data", data);
+//   if (response.ok === true) {
+//     // data.map(item => renderQuestion(item));
+//     renderQuestion(data.question);
+//     renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
+//   }
+// }
 
 let userAnswer;
-let userQuestionID;
+let questionid;
 
 const checkAnswer = async () => {
   // console.log("_id: ", _id);
   // console.log("answerValue: ", userAnswer);
   // console.log("UCA", userAnswer);
+ 
+  socket.emit('user answer', "a9a3f076-8134-4685-b619-1c8c6dafe041","63b5aa31badaa6eeb8d2488f", "100500");
 
+  // const answerResult = await fetch(`/quiz/${gameuuid}/${questionid}`, {
+  //   method: "POST",
+  //   body: JSON.stringify({
+  //     userAnswer
+  //   }),
+  //   headers: {
+  //     "Content-type": "application/json; charset=UTF-8",
+  //   },
+  // })
 
-  const answerResult = await fetch(`/quiz/question/${userQuestionID}`, {
-    method: "POST",
-    body: JSON.stringify({
-      userAnswer
-    }),
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  })
+  // const correctAnswer = await answerResult.json();
+  // // console.log("_C_A_", correctAnswer);
+  // // console.log("data_next", correctAnswer);
 
-  const correctAnswer = await answerResult.json();
-  // console.log("_C_A_", correctAnswer);
-  // console.log("data_next", correctAnswer);
+  // console.log("ANSWER_REVIEW: ", correctAnswer);
 
-  console.log("ANSWER_REVIEW: ", correctAnswer);
-
-  renderOneQuestion();
+  // renderOneQuestion();
 
 }
 
@@ -96,8 +97,8 @@ const renderOneQuestion = async () => {
   }
   
 }
-
-renderOneQuestion();
+ 
+// renderOneQuestion();
 
 const renderAnswersResult = (currentQuestionNumber, correctAnswerCount ) => {
   const answersResBox = document.querySelector(".answers-result-box");
@@ -118,7 +119,7 @@ const renderQuestion = ({ _id, title, answers } ) => {
   const divContainerText = document.createElement("div");
   const divContainerEdit = document.createElement("div");
   divContainerEdit.className = "d-none ";
-  userQuestionID = _id;
+  questionid = _id;
   // divContainerText.innerHTML = `
   // <div class="card-body d-flex">
   // <h5 class="card-title">${questionNumber ? `${++questionNumber})` : ""} ${title}</h5>
@@ -138,8 +139,8 @@ const renderQuestion = ({ _id, title, answers } ) => {
   ul.addEventListener("click", (event) => {
     if (!event.target.classList.contains('btn-answer')) return;
     userAnswer = event.target.innerText;
-    // console.log(userAnswer);
-    
+    console.log("userAnswer", userAnswer);
+     
   }); // КЛИК
   
 
@@ -351,9 +352,9 @@ const btnShowQuestions = document.createElement("button");
 btnShowQuestions.innerText = "Show Questions";
 btnShowQuestions.className = "btn btn-outline-success m-2 align-self-center";
 
-const btnStartQuiz = document.createElement("button");
-btnStartQuiz.innerText = "Start Quiz";
-btnStartQuiz.className = "btn btn-outline-primary m-2 align-self-center";
+// const btnCreateQuiz = document.createElement("button");
+// btnCreateQuiz.innerText = "Create Quiz";
+// btnCreateQuiz.className = "btn btn-outline-primary m-2 align-self-center";
 
 const btnNextQuestion = document.createElement("button");
 btnNextQuestion.innerText = "Next";
@@ -363,7 +364,8 @@ const answersResultBox = document.createElement("p");
 answersResultBox.innerText = "Result: ";
 answersResultBox.className = "m-2 align-self-center answers-result-box";
 
-document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnStartQuiz, btnNextQuestion, answersResultBox);
+// document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnCreateQuiz, btnNextQuestion, answersResultBox);
+document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnNextQuestion, answersResultBox);
 
 //signup
 const registerNewUser = async () => {
@@ -458,8 +460,22 @@ const openNewQuestionField = () => {
 
 btnAdd.addEventListener("click", openNewQuestionField);
 btnShowQuestions.addEventListener("click", renderQuestions);
-btnStartQuiz.addEventListener("click", startQuiz);
+// btnCreateQuiz.addEventListener("click", createQuiz);
 btnNextQuestion.addEventListener("click", checkAnswer);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -489,14 +505,16 @@ const renderUser = (user) => {
 
   userBtn.addEventListener("click", async (e) => {
     const data = await fetch(`/game/new/${gameName}/${user._id}`);
-    const json = await data.json();
-    const gameLink = json.gameLink;
-
-    socket.emit('create game', gameLink);
-
-    $events.append(newItem(`${gameLink}`));
-
-    console.log("GAME_LINK: ", gameLink);
+    const gameLinkData = await data.json();
+    // {  
+    //    initiatorUserLogin,
+    //    http://localhost:8000/game/7ed0480e-bad7-42c3-8fd7-8089a38a7e8d
+    // }
+    if (gameLinkData) {
+      socket.emit('create game', gameLinkData);
+    }
+    // $events.append(newItem(`${gameLinkData.gameLink}`));
+    console.log("GAME_LINK: ", gameLinkData.gameLink);
   });
 }
 
@@ -525,11 +543,17 @@ socket.on('connect', () => {
   $events.append(newItem(`Connected to socket: ${socket.id}`));
 });
 
-socket.on('game created', (userName, gameUUID) => {
-  $events.append(newItem(`${userName} created game : ${gameUUID}`));
+/// нужно ли это??:
+// socket.on('game created', (gameLinkData) => {
+//   $events.append(newItem(`${gameLinkData.initiatorUserLogin} created game: ${gameLinkData.gameLink}`));
+// });
+
+socket.on('user connected', (opponentUserLogin, gameName, gameUUID) => {
+  // console.log("UUUUU", userName, gameName, gameUUID);
+  $events.append(newItem(`${opponentUserLogin} connected to ${gameName} : ${gameUUID}`));
+  if (window.location.href !== `http://localhost:8000/${gameName}/${gameUUID}`) {
+    // window.location.href = `http://localhost:8000/${gameName}/${gameUUID}`;
+  }
 });
 
-socket.on('user connected', (userName, gameName, gameUUID) => {
-  $events.append(newItem(`${userName} connected to game : ${gameUUID}`));
-  window.location.href = `http://localhost:8000/${gameName}/${gameUUID}`;
-});
+// socket.join("fff");

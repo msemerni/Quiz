@@ -4,7 +4,7 @@ import * as GameService from "./game-service";
 import UserService from "../user/user-service";
 import RedisService from "../question/question-redis-service";
 import * as QuestionService from "../question/question-service";
-import { IUser, IGameLinkObject, IUserQuestion, IDBQuestion, IAnswerReview } from "../../types/project-types";
+import { IUser, IUserQuestion, IDBQuestion, IAnswerReview, IGameStatistics } from "../../types/project-types";
 import { ObjectId } from "mongodb";
 import { createClient } from "redis";
 import { Server, Socket } from "socket.io";
@@ -21,34 +21,11 @@ const CreateQuiz = async (req: Request, res: Response): Promise<void> => {
     const initiatorUserLogin: string = req.session.user.login;
     const opponentUserID: ObjectId = req.params.userid as unknown as ObjectId;
     const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
-    const gameLink: string = `${URL}:${PORT}/game/${gameUUID}`;
+    const gameLink: string = `${URL}:${PORT}/?gameuuid=${gameUUID}`;
 
     await GameService.generateGameObject(gameUUID, gameName, initiatorUserID, opponentUserID, redisClient);
 
-    res.status(200).send({initiatorUserLogin, gameLink});
-
-  } catch (error: any) {
-    res.status(500).send({ error: error.message });
-  }
-}
-
-const JoinGame = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const sessionUser: IUser = req.session.user;
-    const gameUUID: string = req.params.gameuuid;
-    const io: any = req.app.get("io");
-    const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
-    const gameObject: IGameLinkObject = await RedisService.getGameObject(gameUUID, redisClient);
-    const gameName: string = gameObject.gameName;
-
-    // console.log(io.sockets.connected);
-    // const rooms = io.sockets.adapter.rooms;
-    // console.log(rooms);
-    // socket.join(gameUUID);
-
-    io.to(gameUUID).emit('user connected', sessionUser.login, gameName, gameUUID);
-
-    res.redirect(`${URL}:${PORT}/${gameName}/${gameUUID}`);
+    res.status(200).send(gameLink);
 
   } catch (error: any) {
     res.status(500).send({ error: error.message });
@@ -61,36 +38,48 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
     const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
 
     await RedisService.changeGameStatus(gameUUID, "process", redisClient);
+    await RedisService.resetIsUsersAnsweredCurrentQuestion(gameUUID, redisClient);
+
     
     const allQuestions: Array<IDBQuestion> | null = await RedisService.getAllQuestions(gameUUID, redisClient);
     const rawQuestion: IDBQuestion | null = await RedisService.getOneQuestion(gameUUID, redisClient);
-    const gameStatistics = await RedisService.getGameStatistics(gameUUID, redisClient);
+    const gameStatistics: IGameStatistics | null = await RedisService.getGameStatistics(gameUUID, redisClient);
     
-    ////////// const currentQuestionNumber: string | null = await RedisService.getCurrentQuestionNumber(redisClient);
-    // const correctAnswerCount: string | null = await RedisService.getCorrectAnswerCount(redisClient);
-    // const  { _id, login, nick } = req.session.user;
-    // const user: IDBUser = {_id, login, nick} as IDBUser;
+    // console.log("GAME_STATISTICS:", gameStatistics);
+
+    // for (const user of gameObject.users) {
+    //   if (Object.keys(user).includes(userIdStr) && user[userIdStr].isAnsweredCurrentQuestion === false) {
+    //     user[userIdStr].isAnsweredCurrentQuestion = true;
+    //     if (isCorrectAnswer) {
+    //       user[userIdStr].correctAnswers++;
+    //     }
+    //   }
+    // }
+  
+    // await RedisService.setGameObject(gameObject, redisClient);
     
+
+
     if (!allQuestions) {
       throw new Error("Questions not found");
     }
 
     if (!rawQuestion) {
-      // const totalQuestionsCount: string = allQuestions.length.toString();
       await RedisService.changeGameStatus(gameUUID, "finished", redisClient);
-      // const gameStatistics = await RedisService.getGameStatistics(gameUUID, redisClient);
       res.status(200).send({ gameStatistics });
 
 
-      const answerReviewSQS: string | null = await RedisService.getAnswerReview(redisClient);
-      if (!answerReviewSQS) {
-        throw new Error("Answer review not found");
-      }
+      // const answerReviewSQS: string | null = await RedisService.getAnswerReview(redisClient);
+      // if (!answerReviewSQS) {
+      //   throw new Error("Answer review not found");
+      // }
       // SQSService.sendDataToAWSQueue(user, answerReviewSQS);
       return;
     }
 
     const question: IUserQuestion | null = GameService.hideCorrectAnswers(rawQuestion!);
+
+    // console.log("SendQuestionToUser", { question, gameStatistics })
 
     res.status(200).send({ question, gameStatistics });
 
@@ -99,14 +88,19 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
   }
 }
 
-const GetAnswerReview = async (req: Request, res: Response): Promise<void> => {
+
+const SetAnswer = async (req: Request, res: Response): Promise<void> => {
   try {
     const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
-    const questionID: string = req.params.questionid;
+    const userID: ObjectId = req.session.user._id as unknown as ObjectId;
+    // const questionID: string = req.params.questionid;
+    const gameUUID: string = req.params.gameuuid;
     const userAnswer: string = req.body.userAnswer;
-    const answerReview: IAnswerReview | null = await GameService.createAnswerReview(questionID, userAnswer, redisClient);
+    const answerReview: IAnswerReview | null = await GameService.createAnswerReview(gameUUID, userID, userAnswer, redisClient);
 
-    res.status(200).send(answerReview);
+    console.log("###_answerReview: ", answerReview);
+    
+    res.status(200).send("answerReview");
 
   } catch (error: any) {
     res.status(500).send({ error: error.message });
@@ -114,8 +108,8 @@ const GetAnswerReview = async (req: Request, res: Response): Promise<void> => {
 }
 
 export { 
-  JoinGame, 
+  // JoinGame, 
   CreateQuiz, 
   SendQuestionToUser,
-  GetAnswerReview
+  SetAnswer
 };

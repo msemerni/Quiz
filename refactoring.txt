@@ -1,0 +1,2 @@
+initiator + opponent => user  (initiatorUser=>user, opponentUser=>user)
+add servise "modige GameObject" in redis (changeGameStatus => changeObject)

@@ -9,7 +9,7 @@ require('dotenv').config();
 const gamePermission = async (req: IGetUserAuthInfoRequest, res: Response, next: NextFunction) => {
   const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
   const { user } = req.session;
-  const userSessionID = user._id;
+  const userSessionID = user._id.toString();
   const gameUUID: string = req.params.gameuuid;
   const gameObject: IGameLinkObject = await RedisService.getGameObject(gameUUID, redisClient);
 
@@ -17,11 +17,10 @@ const gamePermission = async (req: IGetUserAuthInfoRequest, res: Response, next:
     return res.status(401).send({ status: "error", message: "game not found or link expired" });
   }
 
-  const initiatorID: ObjectId = gameObject.initiator.user._id;
-  const opponentID: ObjectId = gameObject.opponent.user._id;
-
-  if (userSessionID === initiatorID || userSessionID === opponentID) {
-    return next();
+  for (const user of gameObject.users) {
+    if (Object.keys(user).includes(userSessionID)) {
+      return next();
+    }
   }
 
   return res.status(401).send({ status: "error", message: "permission denied to this game" });

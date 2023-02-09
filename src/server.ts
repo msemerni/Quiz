@@ -46,7 +46,7 @@ db.once("open", () => console.log("🟢 Mongo connected"));
 
 const RedisGameStore = require("connect-redis")(session);
 
-const redisClient = createClient({
+export const redisClient = createClient({
   legacyMode: true,
   url: `${REDIS_NAME}://${REDIS_HOST}:${REDIS_PORT}`
 });

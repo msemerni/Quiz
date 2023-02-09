@@ -11,14 +11,15 @@ const { QUIZ_LINK_VALIDITY_TIME} = process.env;
 // const setDataToRedis = async (key: string, value: number | string, redisClient: ReturnType<typeof createClient>): Promise<void> => {
 //   await redisClient.set(key, value);
 // }
-
+ 
 
 const getGameObject = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<IGameLinkObject> => {
   const gameObject: string = await promisify(redisClient.get).bind(redisClient)(gameUUID);
-  const parsedGameObject = JSON.parse(gameObject);
+  const parsedGameObject: IGameLinkObject = JSON.parse(gameObject);
+  console.log("&&_getGameObject: ",parsedGameObject);
   return parsedGameObject;
 }
- 
+
  
 const setGameObject = async (gameObject: IGameLinkObject, redisClient: ReturnType<typeof createClient>): Promise<void> => {
   // console.log("GO:", gameObject);
@@ -41,17 +42,31 @@ const changeGameStatus = async (gameUUID: string, status: string, redisClient: R
   const gameObject: IGameLinkObject = await getGameObject(gameUUID, redisClient);
 
   if (status === "created") {
-    gameObject.gameStatus = GameStatus.created
+    gameObject.gameStatus = GameStatus.created;
   }else if (status === "process") {
-    gameObject.gameStatus = GameStatus.process
+    gameObject.gameStatus = GameStatus.process;
   }else if (status === "finished") {
-    gameObject.gameStatus = GameStatus.finished
+    gameObject.gameStatus = GameStatus.finished;
   }else {
-    throw new Error ("wrong status")
+    throw new Error ("wrong status");
   }
 
   await setGameObject(gameObject, redisClient);
 }
+
+const resetIsUsersAnsweredCurrentQuestion = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<void> => {
+  const gameObject: IGameLinkObject = await getGameObject(gameUUID, redisClient);
+
+      for (const user of gameObject.users) {
+      if (Object.keys(user).includes(userIdStr)) {
+        user[userIdStr].isAnsweredCurrentQuestion = false;
+
+      }
+    }
+
+  await setGameObject(gameObject, redisClient);
+}
+
 
 
 const getAllQuestions = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<Array<IDBQuestion> | null> => {
@@ -63,13 +78,9 @@ const getAllQuestions = async (gameUUID: string, redisClient: ReturnType<typeof 
 
 
 const getOneQuestion = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<IDBQuestion | null> => {
-  const questions: Array<IDBQuestion> | null = await getAllQuestions(gameUUID, redisClient);
-  // console.log("***questions***", questions);
-  const currentQuestionNum: number | null = await getCurrentQuestionNumber(gameUUID, redisClient);
-  console.log("***currentQuestionNum***", currentQuestionNum);
-  if (currentQuestionNum === null || !questions) {
-    throw new Error("No correspondent question in Redis (getOneQuestion)");
-  }
+  const gameObject: IGameLinkObject = await getGameObject(gameUUID, redisClient);
+  const questions: Array<IDBQuestion> | null = gameObject.quizQuestions;
+  const currentQuestionNum: number | null = gameObject.currentQuestionNumber;
 
   if (currentQuestionNum >= questions.length) {
     return null;
@@ -81,26 +92,25 @@ const getOneQuestion = async (gameUUID: string, redisClient: ReturnType<typeof c
 }
 
 
-const getCurrentQuestionNumber = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<number | null> => {
-  const gameObject: IGameLinkObject = await getGameObject(gameUUID, redisClient);
+// const getCurrentQuestionNumber = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<number | null> => {
+//   const gameObject: IGameLinkObject = await getGameObject(gameUUID, redisClient);
   
-  // const gameOptionsObject: string = await promisify(redisClient.get).bind(redisClient)(gameUUID);
-  // const gameOptionsObjectParsed: IGameLinkObject = JSON.parse(gameOptionsObject);
+//   // const gameOptionsObject: string = await promisify(redisClient.get).bind(redisClient)(gameUUID);
+//   // const gameOptionsObjectParsed: IGameLinkObject = JSON.parse(gameOptionsObject);
 
-  const currentQuestionNumber: number = gameObject.currentQuestionNumber;
-  console.log("**currentQuestionNumber**", currentQuestionNumber);
+//   const currentQuestionNumber: number = gameObject.currentQuestionNumber;
+//   console.log("**currentQuestionNumber**", currentQuestionNumber);
   
-  return currentQuestionNumber;
-}
+//   return currentQuestionNumber;
+// }
 
 
 const getGameStatistics = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<IGameStatistics | null> => {
   const gameObject: IGameLinkObject = await getGameObject(gameUUID, redisClient);
-  const initiator: IUserStatistics = gameObject.initiator;
-  const opponent: IUserStatistics = gameObject.opponent;
   const totalQuestionsCount: number = gameObject.quizQuestions.length;
+  const statistics: Array<IUserStatistics> = gameObject.users;
 
-  const gameStatistics: IGameStatistics = {totalQuestionsCount, initiator, opponent};
+  const gameStatistics: IGameStatistics = {totalQuestionsCount, statistics};
 
   return gameStatistics;
 }
@@ -110,43 +120,8 @@ const getGameStatistics = async (gameUUID: string, redisClient: ReturnType<typeo
 
 
 
-
-
-
-
-const getAnswerReview = async (redisClient: ReturnType<typeof createClient>): Promise<string | null> => {
-  const answersReview: string = await promisify(redisClient.get).bind(redisClient)("answerReview");
-  return answersReview;
-}
-
-const getCorrectAnswerCount = async (redisClient: ReturnType<typeof createClient>): Promise<string | null> => {
-  const correctAnswerCount: string = await promisify(redisClient.get).bind(redisClient)("correctAnswersCount");
-  return correctAnswerCount;
-}
-
-
-const setNextQuestionNumber = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<void | null> => {
-  const questions: Array<IDBQuestion> | null = await getAllQuestions(gameUUID, redisClient);
-  const currentQuestionNum: number | null = await getCurrentQuestionNumber(gameUUID, redisClient);
-
-  if (!questions || !currentQuestionNum) {
-    throw new Error("No correspondent question in Redis (setNextQuestionNumber)");
-  }
-
-  //// ТУТ ЗАПИСАТЬ В РЕДИС incrementQuestionNumber:
-  // await incrementQuestionNumber(+currentQuestionNum, redisClient);
-}
-
-const registerAnswerAsCorrect = async (redisClient: ReturnType<typeof createClient>): Promise<void> => {
-  const correctAnswerCount: string | null = await getCorrectAnswerCount(redisClient);
-
-  if (!correctAnswerCount) {
-    throw new Error("Correct answers count not found");
-  }
-  // await incrementCorrectAnswersCount(+correctAnswerCount, redisClient);
-}
-
-const setAnswerReview = async (answerReview: any, redisClient: ReturnType<typeof createClient>): Promise<void> => {
+// userID, questionID, userAnswer, redisClient
+const saveAnswerReview = async (answerReview: any, redisClient: ReturnType<typeof createClient>): Promise<void> => {
   const reviews: string = await promisify(redisClient.get).bind(redisClient)("answerReview");
   const reviewArray = JSON.parse(reviews);
   const answerObj = JSON.parse(answerReview);
@@ -154,6 +129,36 @@ const setAnswerReview = async (answerReview: any, redisClient: ReturnType<typeof
   const reviewArrayString = JSON.stringify(reviewArray);
   await redisClient.set("answerReview", reviewArrayString);
 }
+
+
+// const getAnswerReview = async (redisClient: ReturnType<typeof createClient>): Promise<string | null> => {
+//   const answersReview: string = await promisify(redisClient.get).bind(redisClient)("answerReview");
+//   return answersReview;
+// }
+
+const getCorrectAnswerCount = async (redisClient: ReturnType<typeof createClient>): Promise<string | null> => {
+  const correctAnswerCount: string = await promisify(redisClient.get).bind(redisClient)("correctAnswersCount");
+  return correctAnswerCount;
+}
+
+
+
+const registerAnswerAsCorrect = async (redisClient: ReturnType<typeof createClient>): Promise<void> => {
+  // const correctAnswerCount: string | null = await getCorrectAnswerCount(redisClient);
+
+  if (!correctAnswerCount) {
+    throw new Error("Correct answers count not found");
+  }
+  await incrementCorrectAnswersCount(+correctAnswerCount, redisClient);
+}
+
+const incrementCorrectAnswersCount = async (correctAnswersCount: number, redisClient: ReturnType<typeof createClient>): Promise<void> => {
+  await redisClient.set("correctAnswersCount", correctAnswersCount + 1);
+}
+
+
+
+
 
 // const resetCurrentQuestionNumber = async (redisClient: ReturnType<typeof createClient>): Promise<void> => {
 //   await redisClient.set("currentQuestionNumber", 0);
@@ -170,24 +175,22 @@ const setAnswerReview = async (answerReview: any, redisClient: ReturnType<typeof
 // }
 
 
-// const incrementCorrectAnswersCount = async (correctAnswersCount: number, redisClient: ReturnType<typeof createClient>): Promise<void> => {
-//   await redisClient.set("correctAnswersCount", correctAnswersCount + 1);
-// }
+
 
 export = { 
   getAllQuestions,
   getOneQuestion,
-  getCurrentQuestionNumber,
-  getCorrectAnswerCount,
+  // getCurrentQuestionNumber,
+  // getCorrectAnswerCount,
   getGameObject,
   setGameObject,
-  setNextQuestionNumber,
   registerAnswerAsCorrect,
   // resetCurrentQuestionNumber,
   // resetCorrectAnswersCount,
-  setAnswerReview,
-  getAnswerReview,
+  // getAnswerReview,
+  saveAnswerReview,
   getGameStatistics,
-  changeGameStatus
+  changeGameStatus,
+  resetIsUsersAnsweredCurrentQuestion
  }
  

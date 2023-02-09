@@ -1,3 +1,4 @@
+const socket = io();
 
 const renderQuestions = async () => {
   const container = document.querySelector("#container");
@@ -45,42 +46,53 @@ footer.append(timerBox);
 
 let userAnswer;
 let questionid;
+let gameUUID;
 
 const checkAnswer = async () => {
   // console.log("_id: ", _id);
   // console.log("answerValue: ", userAnswer);
   // console.log("UCA", userAnswer);
  
-  socket.emit('user answer', "a9a3f076-8134-4685-b619-1c8c6dafe041","63b5aa31badaa6eeb8d2488f", "100500");
+  // socket.emit('user answer', "5716a678-e1fa-455b-bc2b-ba0502c89e9b","63b5aa46badaa6eeb8d24897", "100500");
 
-  // const answerResult = await fetch(`/quiz/${gameuuid}/${questionid}`, {
-  //   method: "POST",
-  //   body: JSON.stringify({
-  //     userAnswer
-  //   }),
-  //   headers: {
-  //     "Content-type": "application/json; charset=UTF-8",
-  //   },
-  // })
+  const answerResult = await fetch(`/quiz/${gameUUID}/${questionid}`, {
+    method: "POST",
+    body: JSON.stringify({
+      userAnswer
+    }),
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  })
+ 
+  console.log("ANSWER_RESULT: ", answerResult);
 
-  // const correctAnswer = await answerResult.json();
-  // // console.log("_C_A_", correctAnswer);
-  // // console.log("data_next", correctAnswer);
+  const correctAnswer = await answerResult.json();
+  // console.log("_C_A_", correctAnswer);
+  // console.log("data_next", correctAnswer);
 
-  // console.log("ANSWER_REVIEW: ", correctAnswer);
+  console.log("ANSWER_REVIEW: ", correctAnswer);
+
+  let userID = localStorage.getItem("userID");
+
+  if (correctAnswer) {
+    socket.emit('user answer', gameUUID, userID);
+  }
 
   // renderOneQuestion();
 
 }
 
 
-const renderOneQuestion = async () => {
+const renderOneQuestion = async (gameuuid) => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
 
-  const response = await fetch(`/quiz/question`);
+  const response = await fetch(`/quiz/${gameuuid}`);
   
   let data = await response.json();
+
+  console.log("renderOneQuestion: ",data);
 
   if (response.ok === true && data.question && data.question._id) {
     renderQuestion(data.question);
@@ -397,9 +409,12 @@ const loginUser = async () => {
     },
   })
     .then((response) => response.json())
-    .then((json) => { console.log(json) });
+    .then((json) => { 
+      console.log(json) 
+      localStorage.setItem("userID", json._id)
+    });
 };
-
+ 
 //logout
 const logoutUser = async () => {
   fetch(`/user/logout`)
@@ -484,7 +499,7 @@ const gameName = "quiz";
 const $usersBox = document.querySelector(".users-box");
 const $events = document.getElementById('events');
 
-const socket = io();
+
 
 const newItem = (content) => {
   const item = document.createElement('li');
@@ -505,16 +520,18 @@ const renderUser = (user) => {
 
   userBtn.addEventListener("click", async (e) => {
     const data = await fetch(`/game/new/${gameName}/${user._id}`);
-    const gameLinkData = await data.json();
-    // {  
-    //    initiatorUserLogin,
-    //    http://localhost:8000/game/7ed0480e-bad7-42c3-8fd7-8089a38a7e8d
-    // }
-    if (gameLinkData) {
-      socket.emit('create game', gameLinkData);
+    const gameLink = await data.text();
+    //// http://localhost:8000/?gameuuid=3e59eb86-a153-43bf-8095-d10427caf14f
+    // http://localhost:8000/?gameuuid=2c160999-0a08-4d45-bf7b-033e2de49957&invited-user-id=63b5aa3fbadaa6eeb8d24893
+    if (gameLink) {
+      const gameUUID = gameLink.slice(gameLink.lastIndexOf('=') + 1);
+      console.log("GAME__UUID: ", gameUUID);
+
+      socket.emit('create game', gameUUID);
+
+      $events.append(newItem(`${gameLink}`));
+      console.log("GAME__LINK: ", gameLink);
     }
-    // $events.append(newItem(`${gameLinkData.gameLink}`));
-    console.log("GAME_LINK: ", gameLinkData.gameLink);
   });
 }
 
@@ -538,22 +555,55 @@ document.getElementById("create_el").append(btnShowUsers);
 getAllUsers();
 
 
+
 //// Socket connection:
 socket.on('connect', () => {
   $events.append(newItem(`Connected to socket: ${socket.id}`));
 });
 
-/// нужно ли это??:
-// socket.on('game created', (gameLinkData) => {
-//   $events.append(newItem(`${gameLinkData.initiatorUserLogin} created game: ${gameLinkData.gameLink}`));
-// });
 
-socket.on('user connected', (opponentUserLogin, gameName, gameUUID) => {
-  // console.log("UUUUU", userName, gameName, gameUUID);
-  $events.append(newItem(`${opponentUserLogin} connected to ${gameName} : ${gameUUID}`));
-  if (window.location.href !== `http://localhost:8000/${gameName}/${gameUUID}`) {
-    // window.location.href = `http://localhost:8000/${gameName}/${gameUUID}`;
-  }
+socket.on('game created', (gameUUID) => {
+  $events.append(newItem(`Game created: ${gameUUID}`));
 });
 
-// socket.join("fff");
+
+socket.on('game start', (gameUUID) => {
+  console.log("gameRoomClients: ", gameUUID);
+  $events.append(newItem(`Game started: ${gameUUID}`));
+
+  // window.location.href = `http://localhost:8000/?quiz/${gameUUID}`;
+  // history.pushState(null, 'Quiz', `http://localhost:8000/quiz/${gameUUID}`)
+
+  renderOneQuestion(gameUUID);
+
+
+});
+
+
+//////////////////
+window.onload = () => {
+  const urlString = window.location.href;
+  const url = new URL(urlString);
+  const gameUUID = url.searchParams.get("gameuuid");
+  // const invitedUserID = url.searchParams.get("invited-user-id");
+  // console.log("PARAMS_gameUUID: ", gameUUID, invitedUserID);
+  const userID = localStorage.getItem("userID");
+  if(gameUUID) {
+    socket.emit('invitation accepted', gameUUID, userID);
+  };
+};
+
+socket.on('user answer accepted', (userID) => {
+  console.log(`Cli: USER ID: ${userID} answered`);
+  $events.append(newItem(`USER ID: ${userID} answered`));
+});
+
+
+
+// socket.on('user connected', (opponentUserLogin, gameName, gameUUID) => {
+//   // console.log("UUUUU", userName, gameName, gameUUID);
+//   $events.append(newItem(`${opponentUserLogin} connected to ${gameName} : ${gameUUID}`));
+//   if (window.location.href !== `http://localhost:8000/${gameName}/${gameUUID}`) {
+//     // window.location.href = `http://localhost:8000/${gameName}/${gameUUID}`;
+//   }
+// });

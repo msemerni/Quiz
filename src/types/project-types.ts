@@ -42,7 +42,8 @@ export interface IAnswer {
 };
 
 export interface IAnswerReview {
-  _id: string,
+  userID: ObjectId,
+  // _id: string,
   title: string,
   userAnswer: string
   correctAnswer: string
@@ -50,22 +51,23 @@ export interface IAnswerReview {
 };
 
 export interface IUserStatistics {
-  user: IDBUser,
-  correctAnswers: number,
-  totalResponseTime: number
+  [userID: string]: {
+    user: IDBUser,
+    correctAnswers: number,
+    totalResponseTime: number,
+    isAnsweredCurrentQuestion: boolean
+  }
 };
 
 export interface IGameStatistics {
   totalQuestionsCount: number,
-  initiator: IUserStatistics,
-  opponent: IUserStatistics
+  statistics: Array<IUserStatistics>
 };
 
 export interface IGameLinkObject {
   gameUUID: string,
   gameName: string,
-  initiator: IUserStatistics,
-  opponent: IUserStatistics,
+  users: Array<IUserStatistics>,
   linkCreationTime: number,
   quizQuestions: Array<IDBQuestion>,
   currentQuestionNumber: number,

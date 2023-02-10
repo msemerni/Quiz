@@ -28,21 +28,6 @@ footer.append(timerBox);
 //   }, 1000);
 // }
 
-// const createQuiz = async () => {
-//   container.innerHTML = "";
-//   const response = await fetch(`/quiz`);
-
-//   // console.log(response);
-//   // countQuizTimeSpend();
-//   // удалить:
-//   let data = await response.json();
-//   console.log("data", data);
-//   if (response.ok === true) {
-//     // data.map(item => renderQuestion(item));
-//     renderQuestion(data.question);
-//     renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
-//   }
-// }
 
 let userAnswer;
 let questionid;
@@ -53,8 +38,6 @@ const checkAnswer = async () => {
   // console.log("answerValue: ", userAnswer);
   // console.log("UCA", userAnswer);
  
-  // socket.emit('user answer', "5716a678-e1fa-455b-bc2b-ba0502c89e9b","63b5aa46badaa6eeb8d24897", "100500");
-
   const answerResult = await fetch(`/quiz/${gameUUID}/${questionid}`, {
     method: "POST",
     body: JSON.stringify({
@@ -75,9 +58,7 @@ const checkAnswer = async () => {
 
   let userID = localStorage.getItem("userID");
 
-  if (correctAnswer) {
-    socket.emit('user answer', gameUUID, userID);
-  }
+  //   socket.emit('user answer', gameUUID, userID);
 
   // renderOneQuestion();
 
@@ -90,20 +71,40 @@ const renderOneQuestion = async (gameuuid) => {
 
   const response = await fetch(`/quiz/${gameuuid}`);
   
-  let data = await response.json();
+  let gameObject = await response.json();
 
-  console.log("renderOneQuestion: ",data);
+  console.log("renderOneQuestion: ",gameObject);
 
-  if (response.ok === true && data.question && data.question._id) {
-    renderQuestion(data.question);
-    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
-    console.log("data_next", data);
+
+
+  if (response.ok === true && gameObject.gameStatistics && gameObject.question) {
+    renderQuestion(gameObject.question);
+    renderAnswersResult(gameObject.gameStatistics);
+    console.log("gameObject_next", gameObject);
 
   } else {
-    container.innerHTML = `<h3 class="card-title" style="text-align:center;">FINISH</h3>`
+    let winner;
+    const user1 = gameObject.gameStatistics.statistics[0]
+    const user2 = gameObject.gameStatistics.statistics[1]
+
+    if (user1.correctAnswers > user2.correctAnswers) {
+      winner = user1.user.login;
+    } else if (user1.correctAnswers < user2.correctAnswers) {
+      winner = user2.user.login;
+    } else {
+      if (user1.totalResponseTime < user2.totalResponseTime) {
+        winner = user1.user.login;
+      } else if (user1.totalResponseTime > user2.totalResponseTime) {
+        winner = user2.user.login;
+      } else {
+        winner = "dead heat"
+      }
+    }
+
+    container.innerHTML = `<h3 class="card-title" style="text-align:center;">Winner: ${winner}</h3>`
     // clearInterval(timerId);
-    renderAnswersResult(data.totalQuestions-1, data.correctAnswerCount);
-    console.log("data_next", data);
+    renderAnswersResult(gameObject.gameStatistics);
+    console.log("gameObject2_next", gameObject);
 
     console.log("END");
   }
@@ -112,12 +113,8 @@ const renderOneQuestion = async (gameuuid) => {
  
 // renderOneQuestion();
 
-const renderAnswersResult = (currentQuestionNumber, correctAnswerCount ) => {
-  const answersResBox = document.querySelector(".answers-result-box");
-  answersResBox.innerText = `${+correctAnswerCount}/ ${+currentQuestionNumber + 1}`;
-  console.log(currentQuestionNumber);
-  console.log(correctAnswerCount);
-}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
@@ -372,12 +369,32 @@ const btnNextQuestion = document.createElement("button");
 btnNextQuestion.innerText = "Next";
 btnNextQuestion.className = "btn btn-outline-primary m-2 align-self-center";
 
-const answersResultBox = document.createElement("p");
-answersResultBox.innerText = "Result: ";
+const answersResultBox = document.createElement("div");
 answersResultBox.className = "m-2 align-self-center answers-result-box";
 
 // document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnCreateQuiz, btnNextQuestion, answersResultBox);
 document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnNextQuestion, answersResultBox);
+
+
+
+const answersResBox = document.querySelector(".answers-result-box");
+const totalQuestionNumBox = document.createElement("p");
+const user1StatBox = document.createElement("p");
+const user2StatBox = document.createElement("p");
+answersResBox.append(totalQuestionNumBox, user1StatBox, user2StatBox);
+
+const renderAnswersResult = (gameStatistics) => {
+  console.log("G_STAT:", gameStatistics);
+ 
+  const usersStat = gameStatistics.statistics;
+  console.log("usersStat: ", usersStat);
+
+
+  totalQuestionNumBox.innerText = `Total questions: ${gameStatistics.totalQuestionsCount}`;
+  user1StatBox.innerText = `${gameStatistics.statistics[0].user.login}: ${gameStatistics.statistics[0].correctAnswers}`;
+  user2StatBox.innerText = `${gameStatistics.statistics[1].user.login}: ${gameStatistics.statistics[1].correctAnswers}`;
+}
+
 
 //signup
 const registerNewUser = async () => {
@@ -524,7 +541,7 @@ const renderUser = (user) => {
     //// http://localhost:8000/?gameuuid=3e59eb86-a153-43bf-8095-d10427caf14f
     // http://localhost:8000/?gameuuid=2c160999-0a08-4d45-bf7b-033e2de49957&invited-user-id=63b5aa3fbadaa6eeb8d24893
     if (gameLink) {
-      const gameUUID = gameLink.slice(gameLink.lastIndexOf('=') + 1);
+      gameUUID = gameLink.slice(gameLink.lastIndexOf('=') + 1);
       console.log("GAME__UUID: ", gameUUID);
 
       socket.emit('create game', gameUUID);
@@ -579,12 +596,11 @@ socket.on('game start', (gameUUID) => {
 
 });
 
-
 //////////////////
 window.onload = () => {
   const urlString = window.location.href;
   const url = new URL(urlString);
-  const gameUUID = url.searchParams.get("gameuuid");
+  gameUUID = url.searchParams.get("gameuuid");
   // const invitedUserID = url.searchParams.get("invited-user-id");
   // console.log("PARAMS_gameUUID: ", gameUUID, invitedUserID);
   const userID = localStorage.getItem("userID");
@@ -593,10 +609,21 @@ window.onload = () => {
   };
 };
 
-socket.on('user answer accepted', (userID) => {
+socket.on('user answered', (userID) => {
   console.log(`Cli: USER ID: ${userID} answered`);
   $events.append(newItem(`USER ID: ${userID} answered`));
 });
+
+
+
+socket.on('next question', (gameUUID) => {
+  console.log("NEXT___QUESTION__EVENT");
+  setTimeout(()=>{
+    renderOneQuestion(gameUUID);
+  }, 2000)
+});
+
+
 
 
 

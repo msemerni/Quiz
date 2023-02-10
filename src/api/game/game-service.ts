@@ -26,25 +26,22 @@ const generateGameObject = async (gameUUID: string, gameName: string, initiatorU
     gameName,
     users: [
       {
-        [initiatorUserID.toString()]: {
-          user: initiatorUser,
-          correctAnswers: 0,
-          totalResponseTime: 0,
-          isAnsweredCurrentQuestion: false
-        }
+        user: initiatorUser,
+        correctAnswers: 0,
+        totalResponseTime: 0,
+        isAnsweredCurrentQuestion: false
       },
       {
-        [opponentUserID.toString()]: {
-          user: opponentUser,
-          correctAnswers: 0,
-          totalResponseTime: 0,
-          isAnsweredCurrentQuestion: false
-        }
+        user: opponentUser,
+        correctAnswers: 0,
+        totalResponseTime: 0,
+        isAnsweredCurrentQuestion: false
       },
-    ], 
+    ],
     linkCreationTime,
     quizQuestions,
     currentQuestionNumber: 0,
+    currentQuestionSendTime: 0,
     gameStatus: GameStatus.created
   };
   // console.log("GAME_Options_Object:", gameOptionsObject);
@@ -75,11 +72,10 @@ const isAnswerCorrect = (userAnswer: string, correctAnswer: IAnswer): boolean =>
 }
 
 
-const createAnswerReview = async (gameUUID: string, userID: ObjectId, userAnswer: string, redisClient: ReturnType<typeof createClient>): Promise<IAnswerReview> => {
+const createAnswerReview = async (gameUUID: string, questionID: string, userID: ObjectId, userAnswer: string, redisClient: ReturnType<typeof createClient>): Promise<string> => {
   if (!userAnswer) {
     userAnswer = "";
   }
-  const userIdStr = userID.toString();
   const gameObject: IGameLinkObject | null = await RedisService.getGameObject(gameUUID, redisClient);
 
   // console.log("&&_USER_ID: ", userIdStr);
@@ -89,30 +85,49 @@ const createAnswerReview = async (gameUUID: string, userID: ObjectId, userAnswer
   if (!gameObject) {
     throw new Error("gameObject not found (createAnswerReview)")
   }
- 
+
   const currentQuestionNumber: number = gameObject.currentQuestionNumber; // 0
-  const currentQuestion = gameObject.quizQuestions[currentQuestionNumber]; // {_id: '6395a34364974974d7646072', title: '7 + 7', answers: [Array]}
+  const currentQuestion: IDBQuestion = gameObject.quizQuestions[currentQuestionNumber]; // {_id: '6395a34364974974d7646072', title: '7 + 7', answers: [Array]}
   const correctAnswerDB: IAnswer = getCorrectAnswer(currentQuestion);  // {"12": true}
   const correctAnswer: string = Object.keys(correctAnswerDB)[0]; // 12
   const title: string = currentQuestion.title; // "7+7"
   const isCorrectAnswer: boolean = isAnswerCorrect(userAnswer, correctAnswerDB); // true
 
-  for (const user of gameObject.users) {
-    if (Object.keys(user).includes(userIdStr) && user[userIdStr].isAnsweredCurrentQuestion === false) {
-      user[userIdStr].isAnsweredCurrentQuestion = true;
+
+  for (const userObject of gameObject.users) {
+    if (userObject.user._id === userID && currentQuestion._id === questionID && userObject.isAnsweredCurrentQuestion === false) {
+      userObject.isAnsweredCurrentQuestion = true;
+      const questionResponseTime: number = Date.now() - gameObject.currentQuestionSendTime;
+      userObject.totalResponseTime += questionResponseTime;
+
       if (isCorrectAnswer) {
-        user[userIdStr].correctAnswers++;
+        userObject.correctAnswers++;
       }
+
+      await RedisService.updateGameObject(gameObject, redisClient);
     }
   }
 
-  await RedisService.setGameObject(gameObject, redisClient);
-
-  // const isCorrectAnswer: boolean = isAnswerCorrect(userAnswer, correctAnswerDB);
-  // isCorrectAnswer && await RedisService.registerAnswerAsCorrect(redisClient);
-
-  // return answerReview;
+  return correctAnswer;
 }
+
+
+const checkIsAllUsersAnswered = async (gameUUID: string, redisClient: ReturnType<typeof createClient>): Promise<boolean> => {
+  const gameObject: IGameLinkObject | null = await RedisService.getGameObject(gameUUID, redisClient);
+  
+  let isAllUsersAnswered = true;
+
+  for (const userObject of gameObject.users) {
+    if (userObject.isAnsweredCurrentQuestion === false) {
+      isAllUsersAnswered = false;
+    }
+  }
+
+  return isAllUsersAnswered;
+}
+
+
+
 
 const getRandomQuizQuestions = async (questionQuantity: number): Promise<Array<IDBQuestion> | null> => {
   if (!questionQuantity) {
@@ -142,15 +157,16 @@ const hideCorrectAnswers = (rawQuestion: IDBQuestion): IUserQuestion => {
   return transformedQuestion;
 }
 
-export { 
+export {
   generateGameObject,
   getRandomQuizQuestions,
   hideCorrectAnswers,
   // createQuiz,
-  createAnswerReview 
+  createAnswerReview,
+  checkIsAllUsersAnswered,
 };
 
- 
+
 
 // const ob = {
 //   gameUUID: '93b2dc5e-6ae6-42bd-92ff-a9d8119a2a45',

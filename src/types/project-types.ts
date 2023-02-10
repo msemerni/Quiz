@@ -51,12 +51,10 @@ export interface IAnswerReview {
 };
 
 export interface IUserStatistics {
-  [userID: string]: {
     user: IDBUser,
     correctAnswers: number,
     totalResponseTime: number,
     isAnsweredCurrentQuestion: boolean
-  }
 };
 
 export interface IGameStatistics {
@@ -71,9 +69,10 @@ export interface IGameLinkObject {
   linkCreationTime: number,
   quizQuestions: Array<IDBQuestion>,
   currentQuestionNumber: number,
+  currentQuestionSendTime: number,
   gameStatus: GameStatus
 };
-
+ 
 export interface IStatisticsArr {
   readonly id: string;
   readonly title: string;

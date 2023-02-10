@@ -24,12 +24,12 @@ import { redisClient } from "./server";
       socket.join(gameUUID);
 
       ///////////////
-      const rooms = io.sockets.adapter.rooms;
-      const gameRoomClients = rooms.get(gameUUID)
-      const playersNum = gameRoomClients.size;
-      console.log(`CLIENTS IN ROOM ${gameUUID}: `, gameRoomClients);
-      console.log("PLAYERS_NUM: ", playersNum);
-      console.log("SOCKET.ROOMS:", socket.rooms);
+      // const rooms = io.sockets.adapter.rooms;
+      // const gameRoomClients = rooms.get(gameUUID)
+      // const playersNum = gameRoomClients.size;
+      // console.log(`CLIENTS IN ROOM ${gameUUID}: `, gameRoomClients);
+      // console.log("PLAYERS_NUM: ", playersNum);
+      // console.log("SOCKET.ROOMS:", socket.rooms);
 
       io.to(gameUUID).emit('game created', gameUUID);
     });
@@ -39,73 +39,51 @@ import { redisClient } from "./server";
 
       const gameObject: IGameLinkObject = await RedisService.getGameObject(gameUUID, redisClient);
       console.log("IO_inv: gameObject:::", gameObject);
-      for (const user of gameObject.users) {
-        if (Object.keys(user).includes(userID)) {
+
+      for (const userObject of gameObject.users) {
+        if (userObject.user._id.toString() === userID) {
           socket.join(gameUUID);
           io.to(gameUUID).emit('game start', gameUUID);
         }
       } 
  
-      const rooms = io.sockets.adapter.rooms;
-      const gameRoomClients = rooms.get(gameUUID);
-      const playersNum = gameRoomClients.size;
-      console.log(`__CLIENTS IN ROOM ${gameUUID}: `, gameRoomClients);
-      console.log("__PLAYERS_NUM: ", playersNum);
-      console.log("__SOCKET.ROOMS:", socket.rooms);
+      // const rooms = io.sockets.adapter.rooms;
+      // const gameRoomClients = rooms.get(gameUUID);
+      // const playersNum = gameRoomClients.size;
+      // console.log(`__CLIENTS IN ROOM ${gameUUID}: `, gameRoomClients);
+      // console.log("__PLAYERS_NUM: ", playersNum);
+      // console.log("__SOCKET.ROOMS:", socket.rooms);
 
-      const usersSockets = gameRoomClients.keys();
-      console.log("usersSockets: ", usersSockets);
+      // const usersSockets = gameRoomClients.keys();
+      // console.log("usersSockets: ", usersSockets);
       
-      // const sockets = [];
-      // for (let user of gameRoomClients) {
-      //   sockets.push(user);
-      // }
-
-
-
-      // emit/toRoom(user connected) => 
-      //     на фронте: on(room)-fetch SentQuestiontouser
-
-
-      // // const redisClient: ReturnType<typeof createClient> = req.app.get("redisClient");
-
-      // // console.log("gameObject:::", gameObject);
-
+      
      
     });
 
 
-    socket.on('user answer', async (gameUUID, userID) => {
-
-      console.log(`S: USER ID: ${userID} answered`);
-
-      io.to(gameUUID).emit('user answer accepted', userID);
-
-      const gameObject: IGameLinkObject | null = await RedisService.getGameObject(gameUUID, redisClient);
-      // console.log("ON user answer: gameObject: ", gameObject);
-      
-      console.log("IO_ua: gameObject:::", gameObject);
+    // socket.on('user answer', async (gameUUID, userID) => {
+    //   // io.to(gameUUID).emit('user answer accepted', userID);
 
 
-      await RedisService.setGameObject(gameObject, redisClient);
-
-      if(true) {
-        gameObject.currentQuestionNumber++;
-        await RedisService.setGameObject(gameObject, redisClient);
-      }
+    //   //// ТУТ ПРОВЕРКА ОТВЕТИЛИ ЛИ ОБА ЮЗЕРА =>
+    //   if(true) {
+    //     gameObject.currentQuestionNumber++;
+    //     await RedisService.setGameObject(gameObject, redisClient);
+    //   }
       
 
-      const rooms = io.sockets.adapter.rooms;
-      const gameRoomClients = rooms.get(gameUUID);
-      const playersNum = gameRoomClients.size;
-      console.log(`#__CLIENTS IN ROOM ${gameUUID}: `, gameRoomClients);
-      console.log("#__PLAYERS_NUM: ", playersNum);
-      console.log("#__SOCKET.ROOMS:", socket.rooms);
+    //   const rooms = io.sockets.adapter.rooms;
+    //   const gameRoomClients = rooms.get(gameUUID);
+    //   const playersNum = gameRoomClients.size;
+    //   console.log(`#__CLIENTS IN ROOM ${gameUUID}: `, gameRoomClients);
+    //   console.log("#__PLAYERS_NUM: ", playersNum);
+    //   console.log("#__SOCKET.ROOMS:", socket.rooms);
 
-      const usersSockets = gameRoomClients.keys();
-      console.log("#usersSockets: ", usersSockets);
+    //   const usersSockets = gameRoomClients.keys();
+    //   console.log("#usersSockets: ", usersSockets);
 
-    });
+    // });
     
   
 

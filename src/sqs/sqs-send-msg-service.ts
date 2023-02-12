@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import { IDBUser, IStatistics, IStatisticsArr } from "../types/project-types";
+import { IGameStatistics } from "../types/project-types";
 
 const { AWS_REGION, STATISTICS_QUEUE_URL, API_VERSION } = process.env;
 
@@ -13,10 +13,8 @@ if (!STATISTICS_QUEUE_URL) {
 
 const sqs = new AWS.SQS({ apiVersion: API_VERSION });
 
-const sendDataToAWSQueue = (user: IDBUser, messageBody: string): void => {
-  const answers: IStatisticsArr = JSON.parse(messageBody);
-  const messageObj: IStatistics = {user, answers};
-  const message: string = JSON.stringify(messageObj);
+const sendDataToAWSQueue = (gameStatistics: IGameStatistics | null): void => {
+  const message: string = JSON.stringify(gameStatistics);
 
   const params = {
     DelaySeconds: 10,

@@ -3,7 +3,7 @@ import { createClient } from "redis";
 import { ObjectId } from "mongodb";
 import { IGetUserAuthInfoRequest } from '../types/global';
 import { IGameLinkObject } from "../types/project-types";
-import RedisService from "../api/question/question-redis-service";
+import RedisService from "../api/game/game-redis-service";
 require('dotenv').config();
 
 const gamePermission = async (req: IGetUserAuthInfoRequest, res: Response, next: NextFunction) => {

@@ -1,8 +1,5 @@
 import { Question } from "./question-model";
-import { IQuestion, IUserQuestion, IDBQuestion, IAnswer, IAnswerReview } from "../../types/project-types";
-import { createClient } from "redis";
-import RedisService from "./question-redis-service";
-const { QUIZ_QUESTION_QUANTITY } = process.env;
+import { IQuestion, IDBQuestion} from "../../types/project-types";
 
 const getAllQuestions = async (): Promise<Array<IDBQuestion> | null> => {
   const allQuestions: Array<IDBQuestion> | null = await Question.find();
@@ -35,7 +32,7 @@ const upsertQuestion = async (upsertQuestion: IQuestion): Promise<IQuestion | nu
 }
 
 const deleteQuestion = async (_id: string): Promise<IDBQuestion | null> => {
-  const deletedQuestion: IDBQuestion | null = await Question.findByIdAndDelete({ _id })
+  const deletedQuestion: IDBQuestion | null = await Question.findByIdAndDelete({ _id });
   return deletedQuestion;
 }
 

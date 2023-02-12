@@ -43,7 +43,6 @@ export interface IAnswer {
 
 export interface IAnswerReview {
   userID: ObjectId,
-  // _id: string,
   title: string,
   userAnswer: string
   correctAnswer: string
@@ -58,6 +57,7 @@ export interface IUserStatistics {
 };
 
 export interface IGameStatistics {
+  gameID: string,
   totalQuestionsCount: number,
   statistics: Array<IUserStatistics>
 };
@@ -70,7 +70,8 @@ export interface IGameLinkObject {
   quizQuestions: Array<IDBQuestion>,
   currentQuestionNumber: number,
   currentQuestionSendTime: number,
-  gameStatus: GameStatus
+  gameStatus: GameStatus,
+  isSendToSQS: boolean
 };
  
 export interface IStatisticsArr {
@@ -95,4 +96,3 @@ export interface IError {
   readonly status: string;
   readonly message: string;
 };
-

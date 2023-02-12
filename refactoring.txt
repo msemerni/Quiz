@@ -1,5 +1,0 @@
-// initiator + opponent => user  (initiatorUser=>user, opponentUser=>user)
-// user answer не эмитить на фронте. делать через рест ответ => эмит с бэка
-// ТУТ ПРОВЕРКА ОТВИТИЛИ ЛИ ОБА ЮЗЕРА =>
-// add servise "modify GameObject" in redis (changeGameStatus => changeObject)
-не записывать ответ если юзер уже ответил

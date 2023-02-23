@@ -1,5 +1,5 @@
 import { model, Schema, Model } from "mongoose";
-import { IQuestion } from "../../types/project-types";
+import { IQuestion, IAnswer } from "../../types/project-types";
 
 const questionSchema: Schema<IQuestion> = new Schema<IQuestion>(
   {
@@ -7,7 +7,7 @@ const questionSchema: Schema<IQuestion> = new Schema<IQuestion>(
       type: String, 
       required: true },
     answers: { 
-      type: Array, 
+      type: Array<IAnswer>, 
       required: true }
   },
   { versionKey: false }

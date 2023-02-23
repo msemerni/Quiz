@@ -1,8 +1,10 @@
+const socket = io();
 
 const renderQuestions = async () => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
   const response = await fetch(`/question`);
+  console.log(response);
   let data = await response.json();
   console.log("dAtA",data);
 
@@ -11,10 +13,10 @@ const renderQuestions = async () => {
   }
 }
 
-const footer = document.querySelector(".footer");
-const timerBox = document.createElement("h4");
-timerBox.innerText = "0 sec"
-footer.append(timerBox);
+// const footer = document.querySelector(".footer");
+// const timerBox = document.createElement("h4");
+// timerBox.innerText = "0 sec"
+// footer.append(timerBox);
 
 // let timerId;
 // const countQuizTimeSpend = () => {
@@ -26,32 +28,17 @@ footer.append(timerBox);
 //   }, 1000);
 // }
 
-const startQuiz = async () => {
-  container.innerHTML = "";
-  const response = await fetch(`/quiz`);
-
-  // console.log(response);
-  // countQuizTimeSpend();
-  // удалить:
-  let data = await response.json();
-  console.log("data", data);
-  if (response.ok === true) {
-    // data.map(item => renderQuestion(item));
-    renderQuestion(data.question);
-    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
-  }
-}
 
 let userAnswer;
-let userQuestionID;
+let questionid;
+let gameUUID;
 
 const checkAnswer = async () => {
   // console.log("_id: ", _id);
   // console.log("answerValue: ", userAnswer);
   // console.log("UCA", userAnswer);
-
-
-  const answerResult = await fetch(`/quiz/question/${userQuestionID}`, {
+ 
+  const answerResult = await fetch(`/quiz/${gameUUID}/${questionid}`, {
     method: "POST",
     body: JSON.stringify({
       userAnswer
@@ -60,50 +47,79 @@ const checkAnswer = async () => {
       "Content-type": "application/json; charset=UTF-8",
     },
   })
+ 
+  console.log("ANSWER_RESULT: ", answerResult);
 
   const correctAnswer = await answerResult.json();
   // console.log("_C_A_", correctAnswer);
   // console.log("data_next", correctAnswer);
+  // const cardText = document.querySelectorAll(".card-text");
+  // console.log("cardText", cardText);
+
+
+
 
   console.log("ANSWER_REVIEW: ", correctAnswer);
 
-  renderOneQuestion();
+  let userID = localStorage.getItem("userID");
+
+  //   socket.emit('user answer', gameUUID, userID);
+
+  // renderOneQuestion();
 
 }
 
 
-const renderOneQuestion = async () => {
+const renderOneQuestion = async (gameuuid) => {
   const container = document.querySelector("#container");
   container.innerHTML = "";
 
-  const response = await fetch(`/quiz/question`);
+  const response = await fetch(`/quiz/${gameuuid}`);
   
-  let data = await response.json();
+  let gameObject = await response.json();
 
-  if (response.ok === true && data.question && data.question._id) {
-    renderQuestion(data.question);
-    renderAnswersResult(data.currentQuestionNumber, data.correctAnswerCount);
-    console.log("data_next", data);
+  console.log("renderOneQuestion: ",gameObject);
+
+
+
+  if (response.ok === true && gameObject.gameStatistics && gameObject.question) {
+    renderQuestion(gameObject.question);
+    renderAnswersResult(gameObject.gameStatistics);
+    console.log("gameObject_next", gameObject);
 
   } else {
-    container.innerHTML = `<h3 class="card-title" style="text-align:center;">FINISH</h3>`
+    let winner;
+    const user1 = gameObject.gameStatistics.statistics[0]
+    const user2 = gameObject.gameStatistics.statistics[1]
+
+    if (user1.correctAnswers > user2.correctAnswers) {
+      winner = user1.user.login;
+    } else if (user1.correctAnswers < user2.correctAnswers) {
+      winner = user2.user.login;
+    } else {
+      if (user1.totalResponseTime < user2.totalResponseTime) {
+        winner = user1.user.login;
+      } else if (user1.totalResponseTime > user2.totalResponseTime) {
+        winner = user2.user.login;
+      } else {
+        winner = "dead heat"
+      }
+    }
+
+    container.innerHTML = `<h3 class="card-title" style="text-align:center;">Winner: ${winner}</h3>`
     // clearInterval(timerId);
-    renderAnswersResult(data.totalQuestions-1, data.correctAnswerCount);
-    console.log("data_next", data);
+    renderAnswersResult(gameObject.gameStatistics);
+    console.log("gameObject2_next", gameObject);
 
     console.log("END");
   }
   
 }
+ 
+// renderOneQuestion();
 
-renderOneQuestion();
 
-const renderAnswersResult = (currentQuestionNumber, correctAnswerCount ) => {
-  const answersResBox = document.querySelector(".answers-result-box");
-  answersResBox.innerText = `${+correctAnswerCount}/ ${+currentQuestionNumber + 1}`;
-  console.log(currentQuestionNumber);
-  console.log(correctAnswerCount);
-}
+
 
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
@@ -115,31 +131,39 @@ const renderAnswersResult = (currentQuestionNumber, correctAnswerCount ) => {
 let questionNumber = 0;
 const renderQuestion = ({ _id, title, answers } ) => {
   const divContainerText = document.createElement("div");
+  divContainerText.className = "d-flex flex-column w-75 m-auto";
   const divContainerEdit = document.createElement("div");
   divContainerEdit.className = "d-none ";
-  userQuestionID = _id;
+  questionid = _id;
   // divContainerText.innerHTML = `
   // <div class="card-body d-flex">
   // <h5 class="card-title">${questionNumber ? `${++questionNumber})` : ""} ${title}</h5>
   // `
   divContainerText.innerHTML = `
-  <div class="card-body d-flex">
+  <div class="card-body d-flex justify-content-center m-auto">
   <h5 class="card-title">${title}</h5>
   `
   
 
   const ul = document.createElement("div");
   ul.className = "card-text d-flex flex-column quest-container";
-  divContainerText.append(ul);
+
+  const btnNextQuestion = document.createElement("button");
+  btnNextQuestion.innerText = "Answer";
+  btnNextQuestion.className = "btn btn-outline-success m-2 align-self-center";
+  btnNextQuestion.addEventListener("click", checkAnswer);
+
+  divContainerText.append(ul, btnNextQuestion);
 
   
 
   ul.addEventListener("click", (event) => {
     if (!event.target.classList.contains('btn-answer')) return;
     userAnswer = event.target.innerText;
-    // console.log(userAnswer);
-    
+    console.log("userAnswer", userAnswer);
+     
   }); // КЛИК
+  
   
 
   const createAnswersList = (answer) => {
@@ -197,7 +221,8 @@ const renderQuestion = ({ _id, title, answers } ) => {
   divContainerEdit.append(questionAnswers);
   cardHeader.append(btnShow);
   cardHeader.append(btnDel);
-  div.append(cardHeader, divContainerEdit, divContainerText);
+  // div.append(cardHeader, divContainerEdit, divContainerText);
+  div.append(divContainerEdit, divContainerText);
 
   document.getElementById("container").append(div);
 
@@ -246,62 +271,56 @@ const renderQuestion = ({ _id, title, answers } ) => {
 
 const loginForm = document.createElement("form");
 loginForm.classList = 'm-auto px-2 w-100 h-100 text-center bg-light';
+//////
+
+{/* <div class="mb-3 row">
+  <label for="inputPassword" class="col-sm-2 col-form-label">Password</label>
+  <div class="col-sm-10">
+    <input type="password" class="form-control" id="inputPassword">
+  </div>
+</div> */}
 
 const loginDiv = document.createElement("div");
-loginDiv.className = "m-1";
+loginDiv.className = "m-1 row justify-content-center";
 const loginLabel = document.createElement("label");
-loginLabel.classList = "form-label";
-loginLabel.innerText = "Email:";
+loginLabel.classList = "col-sm-2 col-form-label";
+loginLabel.innerText = "Login:";
+const inpDivLogin = document.createElement("div");
+inpDivLogin.className = "col-sm-5";
 const loginInput = document.createElement("input");
-loginInput.type = "email";
-loginInput.placeholder = "* valid email";
-// loginInput.setAttribute('required', 'required'); 
 loginInput.classList = "form-control";
-loginLabel.append(loginInput);
-loginDiv.append(loginLabel);
+inpDivLogin.append(loginInput);
+loginDiv.append(loginLabel, inpDivLogin);
 
 const passwordDiv = document.createElement("div");
-passwordDiv.className = "m-1";
+passwordDiv.className = "m-1 row justify-content-center";
 const passwordLabel = document.createElement("label");
-passwordLabel.classList = "form-label";
+passwordLabel.classList = "col-sm-2 col-form-label";
 passwordLabel.innerText = "Password:";
+const inpDivPass = document.createElement("div");
+inpDivPass.className = "col-sm-5";
 const passwordInput = document.createElement("input");
-passwordInput.type = "password";
-passwordInput.placeholder = "* 'a-zA-Z0-9_' 3-20 symbols";
-// passwordInput.setAttribute('required', 'required'); 
 passwordInput.classList = "form-control";
-
-const passwordConfirmDiv = document.createElement("div");
-passwordConfirmDiv.className = "m-1";
-const passwordConfirmLabel = document.createElement("label");
-passwordConfirmLabel.classList = "form-label";
-passwordConfirmLabel.innerText = "Confirm password:";
-const passwordConfirmInput = document.createElement("input");
-passwordConfirmInput.type = "password";
-passwordConfirmInput.placeholder = "* 'a-zA-Z0-9_' 3-20 symbols";
-// passwordConfirmInput.setAttribute('required', 'required'); 
-passwordConfirmInput.classList = "form-control";
-
-passwordLabel.append(passwordInput);
-passwordConfirmLabel.append(passwordConfirmInput);
-
-passwordDiv.append(passwordLabel);
-passwordConfirmDiv.append(passwordConfirmLabel);
+passwordInput.placeholder = "* 'a-zA-Z0-9_' 3-20 symbols";
+inpDivPass.append(passwordInput);
+passwordDiv.append(passwordLabel, inpDivPass);
 
 const nickDiv = document.createElement("div");
-nickDiv.className = "m-1";
+nickDiv.className = "m-1 row justify-content-center";
 const nickLabel = document.createElement("label");
-nickLabel.classList = "form-label";
-nickLabel.innerText = "Nick name:";
+nickLabel.classList = "col-sm-2 col-form-label";
+nickLabel.innerText = "Nick:";
+const inpDivNick = document.createElement("div");
+inpDivNick.className = "col-sm-5";
 const nickInput = document.createElement("input");
-nickInput.type = "text";
-nickInput.placeholder = "not required";
 nickInput.classList = "form-control";
+nickInput.placeholder = "not required";
+inpDivNick.append(nickInput);
+nickDiv.append(nickLabel, inpDivNick);
 
-nickLabel.append(nickInput);
-nickDiv.append(nickLabel);
 
 const btnDiv = document.createElement("div");
+btnDiv.className = "w-100";
 
 const loginBtn = document.createElement("button");
 loginBtn.classList = "btn btn-outline-success m-2";
@@ -321,7 +340,7 @@ deleteUserBtn.innerText = "Delete";
 
 btnDiv.append(loginBtn, logoutBtn, signupBtn, deleteUserBtn);
 
-loginForm.append(loginDiv, passwordDiv, passwordConfirmDiv, nickDiv, btnDiv);
+loginForm.append(loginDiv, passwordDiv, nickDiv, btnDiv);
 
 document.querySelector(".login-form").append(loginForm);
 
@@ -352,19 +371,39 @@ const btnShowQuestions = document.createElement("button");
 btnShowQuestions.innerText = "Show Questions";
 btnShowQuestions.className = "btn btn-outline-success m-2 align-self-center";
 
-const btnStartQuiz = document.createElement("button");
-btnStartQuiz.innerText = "Start Quiz";
-btnStartQuiz.className = "btn btn-outline-primary m-2 align-self-center";
+// const btnCreateQuiz = document.createElement("button");
+// btnCreateQuiz.innerText = "Create Quiz";
+// btnCreateQuiz.className = "btn btn-outline-primary m-2 align-self-center";
 
-const btnNextQuestion = document.createElement("button");
-btnNextQuestion.innerText = "Next";
-btnNextQuestion.className = "btn btn-outline-primary m-2 align-self-center";
 
-const answersResultBox = document.createElement("p");
-answersResultBox.innerText = "Result: ";
-answersResultBox.className = "m-2 align-self-center answers-result-box";
 
-document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnStartQuiz, btnNextQuestion, answersResultBox);
+const answersResultBox = document.createElement("div");
+answersResultBox.className = "m-2 align-self-center answers-result-box fw-bold";
+
+// document.getElementById("create_el").append(btnShowQuestions, btnAdd, btnCreateQuiz, btnNextQuestion, answersResultBox);
+document.getElementById("create_el").append(btnShowQuestions, btnAdd);
+document.getElementById("answer_res").append(answersResultBox);
+
+
+
+const answersResBox = document.querySelector(".answers-result-box");
+const totalQuestionNumBox = document.createElement("p");
+const user1StatBox = document.createElement("p");
+const user2StatBox = document.createElement("p");
+answersResBox.append(totalQuestionNumBox, user1StatBox, user2StatBox);
+
+const renderAnswersResult = (gameStatistics) => {
+  console.log("G_STAT:", gameStatistics);
+ 
+  const usersStat = gameStatistics.statistics;
+  // console.log("usersStat: ", usersStat);
+
+
+  totalQuestionNumBox.innerText = `Total questions: ${gameStatistics.totalQuestionsCount}`;
+  user1StatBox.innerText = `${gameStatistics.statistics[0].user.login}: ${gameStatistics.statistics[0].correctAnswers} (${gameStatistics.statistics[0].totalResponseTime/ 1000} sec)`;
+  user2StatBox.innerText = `${gameStatistics.statistics[1].user.login}: ${gameStatistics.statistics[1].correctAnswers}  (${gameStatistics.statistics[1].totalResponseTime / 1000} sec)`;
+}
+
 
 //signup
 const registerNewUser = async () => {
@@ -396,9 +435,12 @@ const loginUser = async () => {
     },
   })
     .then((response) => response.json())
-    .then((json) => { console.log(json) });
+    .then((json) => { 
+      console.log(json) 
+      localStorage.setItem("userID", json._id)
+    });
 };
-
+ 
 //logout
 const logoutUser = async () => {
   fetch(`/user/logout`)
@@ -459,5 +501,146 @@ const openNewQuestionField = () => {
 
 btnAdd.addEventListener("click", openNewQuestionField);
 btnShowQuestions.addEventListener("click", renderQuestions);
-btnStartQuiz.addEventListener("click", startQuiz);
-btnNextQuestion.addEventListener("click", checkAnswer);
+// btnCreateQuiz.addEventListener("click", createQuiz);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+const gameName = "quiz";
+
+const $usersBox = document.querySelector(".users-box");
+const $events = document.getElementById('events');
+
+
+
+const newItem = (content) => {
+  const item = document.createElement('li');
+  item.innerText = content;
+  return item;
+}
+
+const renderUsers = (users) => {
+  $usersBox.innerText = "";
+  users.map(user => renderUser(user));
+}
+
+const renderUser = (user) => {
+  const userBtn = document.createElement("button");
+  userBtn.classList = "btn btn-outline-secondary m-1";
+  userBtn.innerText = `${user.login}`;
+  // userBtn.innerText = `${user._id} - ${user.login}`;
+  $usersBox.append(userBtn);
+
+  userBtn.addEventListener("click", async (e) => {
+    const data = await fetch(`/game/new/${gameName}/${user._id}`);
+    const gameLink = await data.text();
+    //// http://localhost:8000/?gameuuid=3e59eb86-a153-43bf-8095-d10427caf14f
+    // http://localhost:8000/?gameuuid=2c160999-0a08-4d45-bf7b-033e2de49957&invited-user-id=63b5aa3fbadaa6eeb8d24893
+    if (gameLink) {
+      gameUUID = gameLink.slice(gameLink.lastIndexOf('=') + 1);
+      console.log("GAME__UUID: ", gameUUID);
+
+      socket.emit('create game', gameUUID);
+
+      $events.append(newItem(`${gameLink}`));
+      console.log("GAME__LINK: ", gameLink);
+    }
+  });
+}
+
+const getAllUsers = async () => {
+  const response = await fetch(`/users`);
+  let users = await response.json();
+  // console.log("USERS", users);
+  if (response.ok === true) {
+    renderUsers(users);
+  }
+}
+
+
+const btnShowUsers = document.createElement("button");
+btnShowUsers.innerText = "Show Users";
+btnShowUsers.classList = "btn btn-outline-success m-2 align-self-center w-75";
+btnShowUsers.addEventListener("click", getAllUsers);
+
+document.getElementById("create_el").append(btnShowUsers);
+
+// getAllUsers();
+
+
+
+//// Socket connection:
+socket.on('connect', () => {
+  $events.append(newItem(`Connected to socket: ${socket.id}`));
+});
+
+
+socket.on('game created', (gameUUID) => {
+  $events.append(newItem(`Game created: ${gameUUID}`));
+});
+
+
+socket.on('game start', (gameUUID) => {
+  console.log("gameRoomClients: ", gameUUID);
+  $events.append(newItem(`Game started: ${gameUUID}`));
+
+  // window.location.href = `http://localhost:8000/?quiz/${gameUUID}`;
+  // history.pushState(null, 'Quiz', `http://localhost:8000/quiz/${gameUUID}`)
+
+  renderOneQuestion(gameUUID);
+
+
+});
+
+//////////////////
+window.onload = () => {
+  const urlString = window.location.href;
+  const url = new URL(urlString);
+  gameUUID = url.searchParams.get("gameuuid");
+  // const invitedUserID = url.searchParams.get("invited-user-id");
+  // console.log("PARAMS_gameUUID: ", gameUUID, invitedUserID);
+  const userID = localStorage.getItem("userID");
+  if(gameUUID) {
+    socket.emit('invitation accepted', gameUUID, userID);
+  };
+};
+
+socket.on('user answered', (userID) => {
+  console.log(`Cli: USER ID: ${userID} answered`);
+  $events.append(newItem(`USER ID: ${userID} answered`));
+});
+
+
+
+socket.on('next question', (gameUUID) => {
+  console.log("NEXT___QUESTION__EVENT");
+  setTimeout(()=>{
+    renderOneQuestion(gameUUID);
+  }, 1500)
+});
+
+
+
+
+
+// socket.on('user connected', (opponentUserLogin, gameName, gameUUID) => {
+//   // console.log("UUUUU", userName, gameName, gameUUID);
+//   $events.append(newItem(`${opponentUserLogin} connected to ${gameName} : ${gameUUID}`));
+//   if (window.location.href !== `http://localhost:8000/${gameName}/${gameUUID}`) {
+//     // window.location.href = `http://localhost:8000/${gameName}/${gameUUID}`;
+//   }
+// });

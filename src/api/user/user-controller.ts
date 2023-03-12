@@ -33,7 +33,7 @@ const SignUp = async (req: Request, res: Response): Promise<void> => {
     res.status(500).send({ error: error.message });
   }
 };
-
+ 
 const LogIn = async (req: Request, res: Response): Promise<void> => {
   try {
     const { login, password }: { login: string, password: string } = req.body;

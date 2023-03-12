@@ -63,7 +63,8 @@ app.use(
     saveUninitialized: false,
     secret: SESSION_SECRET!,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24,
+      maxAge: 1000 * 60 * 60,
+      // httpOnly:false
     }
   }));
 
@@ -73,6 +74,17 @@ app.use(function (req: Request, res: Response, next: NextFunction) {
   }
   next();
 })
+
+///// allow cors:
+const cors=require("cors");
+const corsOptions ={
+   origin:'*', 
+   credentials:true, //access-control-allow-credentials:true
+   optionSuccessStatus:200,
+}
+
+app.use(cors(corsOptions));
+/////
 
 app.use(bodyParser.json());
 app.use(express.static("public"));

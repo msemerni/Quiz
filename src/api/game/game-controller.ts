@@ -53,7 +53,7 @@ const SendQuestionToUser = async (req: Request, res: Response): Promise<void> =>
       if (!isSendToSQS) {
 
         // await SQSService.sendDataToAWSQueue(gameStatistics);
-        
+
         await RedisService.setIsSendToSQS(gameUUID, redisClient);
       }
 
@@ -102,3 +102,4 @@ export {
   SendQuestionToUser,
   SetAnswer
 };
+

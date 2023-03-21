@@ -74,7 +74,7 @@ app.use(function (req: Request, res: Response, next: NextFunction) {
   }
   next();
 })
-
+ 
 ///// allow cors:
 const cors=require("cors");
 const corsOptions ={

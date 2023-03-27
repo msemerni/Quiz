@@ -15,7 +15,7 @@ const SignUp = async (req: Request, res: Response): Promise<void> => {
       res.status(401).send(isValidNewUser);
       return;
     }
-
+ 
     const userDB: IUser | null = await UserService.findUser({ login });
 
     if (userDB) {
